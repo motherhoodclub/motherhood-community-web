@@ -70,18 +70,26 @@ export default function LoginPage() {
   async function handlePhoneSignInSendOtp(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsPhoneLoading(true)
-    setError(null) // Clear previous errors
+    setError(null)
     const { error: otpError } = await supabase.auth.signInWithOtp({
       phone: phone,
+      options: {
+        channel: "whatsapp", // Specify WhatsApp channel
+      },
     })
     setIsPhoneLoading(false)
     if (otpError) {
-      setError(`خطأ في إرسال الرمز: ${otpError.message}`)
+      setError(`خطأ في إرسال الرمز عبر واتساب: ${otpError.message}`)
+      toast({
+        variant: "destructive",
+        title: "خطأ في إرسال الرمز",
+        description: otpError.message,
+      })
     } else {
       setShowOtpInput(true)
       toast({
-        title: "تم إرسال الرمز",
-        description: "يرجى التحقق من هاتفك وإدخال الرمز.",
+        title: "تم إرسال الرمز عبر واتساب",
+        description: "يرجى التحقق من واتساب وإدخال الرمز.",
       })
     }
   }
@@ -89,15 +97,20 @@ export default function LoginPage() {
   async function handlePhoneSignInVerifyOtp(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsPhoneLoading(true)
-    setError(null) // Clear previous errors
+    setError(null)
     const { data, error: verifyError } = await supabase.auth.verifyOtp({
       phone: phone,
       token: otp,
-      type: "sms",
+      type: "sms", // Type remains 'sms' for phone OTP verification
     })
     setIsPhoneLoading(false)
     if (verifyError) {
       setError(`خطأ في التحقق من الرمز: ${verifyError.message}`)
+      toast({
+        variant: "destructive",
+        title: "خطأ في التحقق",
+        description: verifyError.message,
+      })
     } else if (data.session) {
       toast({
         title: "تم تسجيل الدخول بنجاح",
@@ -107,6 +120,11 @@ export default function LoginPage() {
       router.refresh()
     } else {
       setError("لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.")
+      toast({
+        variant: "destructive",
+        title: "فشل التحقق",
+        description: "لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.",
+      })
     }
   }
 
@@ -114,7 +132,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">تسجيل الدخول</CardTitle>
-        <CardDescription>أدخلي بريدك الإلكتروني وكلمة المرور للدخول إلى حسابك</CardDescription>
+        <CardDescription>أدخلي بياناتك للدخول إلى حسابك</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
@@ -136,6 +154,7 @@ export default function LoginPage() {
               className="text-right"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isPhoneLoading || showOtpInput}
             />
           </div>
           <div className="space-y-2">
@@ -149,11 +168,12 @@ export default function LoginPage() {
               className="text-right"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isPhoneLoading || showOtpInput}
             />
           </div>
-          <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+          <Button className="w-full" disabled={isLoading || isPhoneLoading || showOtpInput}>
             {isLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-            تسجيل الدخول
+            تسجيل الدخول بالبريد
           </Button>
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
@@ -170,7 +190,7 @@ export default function LoginPage() {
             onClick={async () => {
               setIsLoading(true)
               setError(null)
-              const { data, error } = await supabase.auth.signInWithOAuth({
+              const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
                   redirectTo: `${window.location.origin}/auth/callback`,
@@ -179,11 +199,12 @@ export default function LoginPage() {
               if (error) {
                 setIsLoading(false)
                 setError("حدث خطأ أثناء تسجيل الدخول باستخدام Google")
+                toast({ variant: "destructive", title: "خطأ Google", description: error.message })
               }
             }}
-            disabled={isLoading || isPhoneLoading}
+            disabled={isLoading || isPhoneLoading || showOtpInput}
           >
-            {isLoading ? (
+            {isLoading && !isPhoneLoading ? (
               <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />
             ) : (
               <Icons.google className="ml-2 h-4 w-4" />
@@ -210,7 +231,7 @@ export default function LoginPage() {
               <Input
                 id="phone-login"
                 type="tel"
-                placeholder="+1234567890"
+                placeholder="+201000000000"
                 required
                 className="text-left"
                 value={phone}
@@ -219,16 +240,16 @@ export default function LoginPage() {
                 disabled={isLoading || isPhoneLoading}
               />
             </div>
-            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+            <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading}>
               {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-              تسجيل الدخول باستخدام الهاتف
+              تسجيل الدخول عبر واتساب
             </Button>
           </form>
         ) : (
           <form onSubmit={handlePhoneSignInVerifyOtp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="otp-login" className="text-right block">
-                الرمز المُرسل إلى هاتفك
+                الرمز المُرسل إلى واتساب
               </Label>
               <Input
                 id="otp-login"
@@ -244,7 +265,7 @@ export default function LoginPage() {
                 disabled={isLoading || isPhoneLoading}
               />
             </div>
-            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+            <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading}>
               {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
               تحقق وتسجيل الدخول
             </Button>
@@ -255,7 +276,6 @@ export default function LoginPage() {
                 setShowOtpInput(false)
                 setError(null)
                 setOtp("")
-                // Optionally clear phone: setPhone('');
               }}
               className="w-full"
               disabled={isPhoneLoading}

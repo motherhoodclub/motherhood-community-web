@@ -20,7 +20,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState<string>("")
   const [name, setName] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
-  const [isRegistered, setIsRegistered] = useState<boolean>(false)
+  const [isRegistered, setIsRegistered] = useState<boolean>(false) // For email registration flow
   const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
@@ -30,61 +30,12 @@ export default function RegisterPage() {
   const [showOtpInput, setShowOtpInput] = useState<boolean>(false)
   const [isPhoneLoading, setIsPhoneLoading] = useState<boolean>(false)
 
-  async function handlePhoneSignUpSendOtp(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsPhoneLoading(true)
-    setError(null) // Clear previous errors
-
-    // signInWithOtp will create a user if they don't exist.
-    // Name is not collected in this simplified flow for phone, can be added in profile later.
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      phone: phone,
-    })
-    setIsPhoneLoading(false)
-    if (otpError) {
-      setError(`خطأ في إرسال الرمز: ${otpError.message}`)
-    } else {
-      setShowOtpInput(true)
-      toast({
-        title: "تم إرسال الرمز",
-        description: "يرجى التحقق من هاتفك وإدخال الرمز لإنشاء الحساب.",
-      })
-    }
-  }
-
-  async function handlePhoneSignUpVerifyOtp(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsPhoneLoading(true)
-    setError(null) // Clear previous errors
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      phone: phone,
-      token: otp,
-      type: "sms",
-    })
-    setIsPhoneLoading(false)
-    if (verifyError) {
-      setError(`خطأ في التحقق من الرمز: ${verifyError.message}`)
-    } else if (data.session) {
-      // User is now signed up and signed in.
-      // The `isRegistered` state and its UI are for email confirmation.
-      // For phone OTP, successful verification means they are in.
-      toast({
-        title: "تم إنشاء الحساب وتسجيل الدخول بنجاح",
-        description: "مرحبًا بك في نادي الأمومة!",
-      })
-      router.push("/community")
-      router.refresh()
-    } else {
-      setError("لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.")
-    }
-  }
-
-  async function onSubmit(event: React.SyntheticEvent) {
+  async function handleEmailSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -95,25 +46,90 @@ export default function RegisterPage() {
       },
     })
 
-    if (error) {
-      setIsLoading(false)
-      if (error.message.includes("User already registered")) {
+    setIsLoading(false)
+    if (signUpError) {
+      if (signUpError.message.includes("User already registered")) {
         setError("البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول أو استخدام بريد إلكتروني آخر.")
       } else {
-        setError(error.message)
+        setError(signUpError.message)
       }
+      toast({ variant: "destructive", title: "خطأ في التسجيل", description: signUpError.message })
     } else if (data.user) {
-      setIsRegistered(true)
+      setIsRegistered(true) // Show email confirmation message
       toast({
         title: "تم إنشاء الحساب بنجاح",
         description: "يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك",
       })
     }
+  }
 
-    setIsLoading(false)
+  async function handlePhoneSignUpSendOtp(event: React.SyntheticEvent) {
+    event.preventDefault()
+    setIsPhoneLoading(true)
+    setError(null)
+    // For sign-up, Supabase creates the user if they don't exist when signInWithOtp is called.
+    // Name can be collected via a profile update step later if needed for phone-only signups.
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      phone: phone,
+      options: {
+        channel: "whatsapp", // Specify WhatsApp channel
+        // data: { name: name } // You can pass user metadata here if needed during signup
+      },
+    })
+    setIsPhoneLoading(false)
+    if (otpError) {
+      setError(`خطأ في إرسال الرمز عبر واتساب: ${otpError.message}`)
+      toast({
+        variant: "destructive",
+        title: "خطأ في إرسال الرمز",
+        description: otpError.message,
+      })
+    } else {
+      setShowOtpInput(true)
+      toast({
+        title: "تم إرسال الرمز عبر واتساب",
+        description: "يرجى التحقق من واتساب وإدخال الرمز لإنشاء الحساب.",
+      })
+    }
+  }
+
+  async function handlePhoneSignUpVerifyOtp(event: React.SyntheticEvent) {
+    event.preventDefault()
+    setIsPhoneLoading(true)
+    setError(null)
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      phone: phone,
+      token: otp,
+      type: "sms", // Type remains 'sms' for phone OTP verification
+    })
+    setIsPhoneLoading(false)
+    if (verifyError) {
+      setError(`خطأ في التحقق من الرمز: ${verifyError.message}`)
+      toast({
+        variant: "destructive",
+        title: "خطأ في التحقق",
+        description: verifyError.message,
+      })
+    } else if (data.session) {
+      // User is now signed up and signed in.
+      toast({
+        title: "تم إنشاء الحساب وتسجيل الدخول بنجاح",
+        description: "مرحبًا بك في نادي الأمومة!",
+      })
+      router.push("/community")
+      router.refresh()
+    } else {
+      setError("لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.")
+      toast({
+        variant: "destructive",
+        title: "فشل التحقق",
+        description: "لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.",
+      })
+    }
   }
 
   if (isRegistered) {
+    // This state is for email registration confirmation
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -150,7 +166,7 @@ export default function RegisterPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={handleEmailSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-right block">
               الاسم
@@ -162,6 +178,7 @@ export default function RegisterPage() {
               className="text-right"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={isPhoneLoading || showOtpInput}
             />
           </div>
           <div className="space-y-2">
@@ -176,6 +193,7 @@ export default function RegisterPage() {
               className="text-right"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isPhoneLoading || showOtpInput}
             />
           </div>
           <div className="space-y-2">
@@ -189,11 +207,12 @@ export default function RegisterPage() {
               className="text-right"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isPhoneLoading || showOtpInput}
             />
           </div>
-          <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+          <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading || showOtpInput}>
             {isLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-            إنشاء الحساب
+            إنشاء حساب بالبريد
           </Button>
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
@@ -210,7 +229,7 @@ export default function RegisterPage() {
             onClick={async () => {
               setIsLoading(true)
               setError(null)
-              const { data, error } = await supabase.auth.signInWithOAuth({
+              const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
                   redirectTo: `${window.location.origin}/auth/callback`,
@@ -219,11 +238,12 @@ export default function RegisterPage() {
               if (error) {
                 setIsLoading(false)
                 setError("حدث خطأ أثناء التسجيل باستخدام Google")
+                toast({ variant: "destructive", title: "خطأ Google", description: error.message })
               }
             }}
-            disabled={isLoading || isPhoneLoading}
+            disabled={isLoading || isPhoneLoading || showOtpInput}
           >
-            {isLoading ? (
+            {isLoading && !isPhoneLoading ? (
               <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />
             ) : (
               <Icons.google className="ml-2 h-4 w-4" />
@@ -248,7 +268,7 @@ export default function RegisterPage() {
               <Input
                 id="phone-register"
                 type="tel"
-                placeholder="+1234567890"
+                placeholder="+201000000000"
                 required
                 className="text-left"
                 value={phone}
@@ -257,16 +277,16 @@ export default function RegisterPage() {
                 disabled={isLoading || isPhoneLoading}
               />
             </div>
-            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+            <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading}>
               {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-              التسجيل باستخدام الهاتف
+              التسجيل عبر واتساب
             </Button>
           </form>
         ) : (
           <form onSubmit={handlePhoneSignUpVerifyOtp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="otp-register" className="text-right block">
-                الرمز المُرسل إلى هاتفك
+                الرمز المُرسل إلى واتساب
               </Label>
               <Input
                 id="otp-register"
@@ -282,7 +302,7 @@ export default function RegisterPage() {
                 disabled={isLoading || isPhoneLoading}
               />
             </div>
-            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+            <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading}>
               {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
               تحقق وإنشاء الحساب
             </Button>
