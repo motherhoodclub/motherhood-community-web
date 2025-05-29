@@ -25,6 +25,60 @@ export default function RegisterPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
+  const [phone, setPhone] = useState<string>("")
+  const [otp, setOtp] = useState<string>("")
+  const [showOtpInput, setShowOtpInput] = useState<boolean>(false)
+  const [isPhoneLoading, setIsPhoneLoading] = useState<boolean>(false)
+
+  async function handlePhoneSignUpSendOtp(event: React.SyntheticEvent) {
+    event.preventDefault()
+    setIsPhoneLoading(true)
+    setError(null) // Clear previous errors
+
+    // signInWithOtp will create a user if they don't exist.
+    // Name is not collected in this simplified flow for phone, can be added in profile later.
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      phone: phone,
+    })
+    setIsPhoneLoading(false)
+    if (otpError) {
+      setError(`خطأ في إرسال الرمز: ${otpError.message}`)
+    } else {
+      setShowOtpInput(true)
+      toast({
+        title: "تم إرسال الرمز",
+        description: "يرجى التحقق من هاتفك وإدخال الرمز لإنشاء الحساب.",
+      })
+    }
+  }
+
+  async function handlePhoneSignUpVerifyOtp(event: React.SyntheticEvent) {
+    event.preventDefault()
+    setIsPhoneLoading(true)
+    setError(null) // Clear previous errors
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      phone: phone,
+      token: otp,
+      type: "sms",
+    })
+    setIsPhoneLoading(false)
+    if (verifyError) {
+      setError(`خطأ في التحقق من الرمز: ${verifyError.message}`)
+    } else if (data.session) {
+      // User is now signed up and signed in.
+      // The `isRegistered` state and its UI are for email confirmation.
+      // For phone OTP, successful verification means they are in.
+      toast({
+        title: "تم إنشاء الحساب وتسجيل الدخول بنجاح",
+        description: "مرحبًا بك في نادي الأمومة!",
+      })
+      router.push("/community")
+      router.refresh()
+    } else {
+      setError("لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.")
+    }
+  }
+
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsLoading(true)
@@ -137,7 +191,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button className="w-full" disabled={isLoading}>
+          <Button className="w-full" disabled={isLoading || isPhoneLoading}>
             {isLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
             إنشاء الحساب
           </Button>
@@ -167,7 +221,7 @@ export default function RegisterPage() {
                 setError("حدث خطأ أثناء التسجيل باستخدام Google")
               }
             }}
-            disabled={isLoading}
+            disabled={isLoading || isPhoneLoading}
           >
             {isLoading ? (
               <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />
@@ -177,6 +231,76 @@ export default function RegisterPage() {
             التسجيل باستخدام Google
           </Button>
         </form>
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">أو</span>
+          </div>
+        </div>
+        {!showOtpInput ? (
+          <form onSubmit={handlePhoneSignUpSendOtp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone-register" className="text-right block">
+                رقم الهاتف (مع رمز الدولة)
+              </Label>
+              <Input
+                id="phone-register"
+                type="tel"
+                placeholder="+1234567890"
+                required
+                className="text-left"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                dir="ltr"
+                disabled={isLoading || isPhoneLoading}
+              />
+            </div>
+            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+              {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
+              التسجيل باستخدام الهاتف
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handlePhoneSignUpVerifyOtp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="otp-register" className="text-right block">
+                الرمز المُرسل إلى هاتفك
+              </Label>
+              <Input
+                id="otp-register"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                required
+                className="text-center"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                dir="ltr"
+                disabled={isLoading || isPhoneLoading}
+              />
+            </div>
+            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+              {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
+              تحقق وإنشاء الحساب
+            </Button>
+            <Button
+              variant="link"
+              type="button"
+              onClick={() => {
+                setShowOtpInput(false)
+                setError(null)
+                setOtp("")
+              }}
+              className="w-full"
+              disabled={isPhoneLoading}
+            >
+              تغيير رقم الهاتف أو استخدام طريقة أخرى
+            </Button>
+          </form>
+        )}
       </CardContent>
       <CardFooter className="text-center">
         <div className="text-sm text-muted-foreground">

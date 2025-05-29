@@ -23,6 +23,11 @@ export default function LoginPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
+  const [phone, setPhone] = useState<string>("")
+  const [otp, setOtp] = useState<string>("")
+  const [showOtpInput, setShowOtpInput] = useState<boolean>(false)
+  const [isPhoneLoading, setIsPhoneLoading] = useState<boolean>(false)
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -59,6 +64,49 @@ export default function LoginPage() {
       })
       router.push("/community")
       router.refresh()
+    }
+  }
+
+  async function handlePhoneSignInSendOtp(event: React.SyntheticEvent) {
+    event.preventDefault()
+    setIsPhoneLoading(true)
+    setError(null) // Clear previous errors
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      phone: phone,
+    })
+    setIsPhoneLoading(false)
+    if (otpError) {
+      setError(`خطأ في إرسال الرمز: ${otpError.message}`)
+    } else {
+      setShowOtpInput(true)
+      toast({
+        title: "تم إرسال الرمز",
+        description: "يرجى التحقق من هاتفك وإدخال الرمز.",
+      })
+    }
+  }
+
+  async function handlePhoneSignInVerifyOtp(event: React.SyntheticEvent) {
+    event.preventDefault()
+    setIsPhoneLoading(true)
+    setError(null) // Clear previous errors
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      phone: phone,
+      token: otp,
+      type: "sms",
+    })
+    setIsPhoneLoading(false)
+    if (verifyError) {
+      setError(`خطأ في التحقق من الرمز: ${verifyError.message}`)
+    } else if (data.session) {
+      toast({
+        title: "تم تسجيل الدخول بنجاح",
+        description: "مرحبًا بك في نادي الأمومة",
+      })
+      router.push("/community")
+      router.refresh()
+    } else {
+      setError("لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.")
     }
   }
 
@@ -103,7 +151,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button className="w-full" disabled={isLoading}>
+          <Button className="w-full" disabled={isLoading || isPhoneLoading}>
             {isLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
             تسجيل الدخول
           </Button>
@@ -133,7 +181,7 @@ export default function LoginPage() {
                 setError("حدث خطأ أثناء تسجيل الدخول باستخدام Google")
               }
             }}
-            disabled={isLoading}
+            disabled={isLoading || isPhoneLoading}
           >
             {isLoading ? (
               <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />
@@ -143,6 +191,79 @@ export default function LoginPage() {
             تسجيل الدخول باستخدام Google
           </Button>
         </form>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">أو</span>
+          </div>
+        </div>
+
+        {!showOtpInput ? (
+          <form onSubmit={handlePhoneSignInSendOtp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone-login" className="text-right block">
+                رقم الهاتف (مع رمز الدولة)
+              </Label>
+              <Input
+                id="phone-login"
+                type="tel"
+                placeholder="+1234567890"
+                required
+                className="text-left"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                dir="ltr"
+                disabled={isLoading || isPhoneLoading}
+              />
+            </div>
+            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+              {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
+              تسجيل الدخول باستخدام الهاتف
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handlePhoneSignInVerifyOtp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="otp-login" className="text-right block">
+                الرمز المُرسل إلى هاتفك
+              </Label>
+              <Input
+                id="otp-login"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                required
+                className="text-center"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                dir="ltr"
+                disabled={isLoading || isPhoneLoading}
+              />
+            </div>
+            <Button className="w-full" disabled={isLoading || isPhoneLoading}>
+              {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
+              تحقق وتسجيل الدخول
+            </Button>
+            <Button
+              variant="link"
+              type="button"
+              onClick={() => {
+                setShowOtpInput(false)
+                setError(null)
+                setOtp("")
+                // Optionally clear phone: setPhone('');
+              }}
+              className="w-full"
+              disabled={isPhoneLoading}
+            >
+              تغيير رقم الهاتف أو استخدام طريقة أخرى
+            </Button>
+          </form>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-4">
         <Link href="/auth/reset-password" className="text-sm text-muted-foreground hover:underline">
