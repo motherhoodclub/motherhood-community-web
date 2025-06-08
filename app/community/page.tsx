@@ -134,9 +134,19 @@ export default function CommunityPage() {
 
       if (error) throw error
 
-      // Get user profiles for all authors
+      console.log("Topics data structure:", topicsData?.[0]) // DEBUG: Let's see what fields we have
+
+      // Get user profiles for all authors - try different possible field names
       if (topicsData && topicsData.length > 0) {
-        const authorIds = [...new Set(topicsData.map((topic) => topic.author_id).filter(Boolean))]
+        const authorIds = [
+          ...new Set(
+            topicsData
+              .map((topic) => topic.author_id || topic.user_id || topic.created_by || topic.author)
+              .filter(Boolean),
+          ),
+        ]
+
+        console.log("Author IDs found:", authorIds) // DEBUG: Let's see what IDs we extract
 
         if (authorIds.length > 0) {
           const { data: profiles } = await supabase
@@ -144,11 +154,18 @@ export default function CommunityPage() {
             .select("id, username, avatar_url")
             .in("id", authorIds)
 
+          console.log("Profiles found:", profiles) // DEBUG: Let's see what profiles we get
+
           // Merge profile data with topics
-          const topicsWithProfiles = topicsData.map((topic) => ({
-            ...topic,
-            user_profiles: profiles?.find((profile) => profile.id === topic.author_id) || null,
-          }))
+          const topicsWithProfiles = topicsData.map((topic) => {
+            const authorId = topic.author_id || topic.user_id || topic.created_by || topic.author
+            const profile = profiles?.find((profile) => profile.id === authorId)
+
+            return {
+              ...topic,
+              user_profiles: profile || null,
+            }
+          })
 
           setTopics(topicsWithProfiles)
         } else {
@@ -199,9 +216,19 @@ export default function CommunityPage() {
 
       if (error) throw error
 
-      // Get user profiles for all authors
+      console.log("Questions data structure:", questionsData?.[0]) // DEBUG: Let's see what fields we have
+
+      // Get user profiles for all authors - try different possible field names
       if (questionsData && questionsData.length > 0) {
-        const authorIds = [...new Set(questionsData.map((question) => question.author_id).filter(Boolean))]
+        const authorIds = [
+          ...new Set(
+            questionsData
+              .map((question) => question.author_id || question.user_id || question.created_by || question.author)
+              .filter(Boolean),
+          ),
+        ]
+
+        console.log("Question Author IDs found:", authorIds) // DEBUG: Let's see what IDs we extract
 
         if (authorIds.length > 0) {
           const { data: profiles } = await supabase
@@ -209,11 +236,18 @@ export default function CommunityPage() {
             .select("id, username, avatar_url")
             .in("id", authorIds)
 
+          console.log("Question Profiles found:", profiles) // DEBUG: Let's see what profiles we get
+
           // Merge profile data with questions
-          const questionsWithProfiles = questionsData.map((question) => ({
-            ...question,
-            user_profiles: profiles?.find((profile) => profile.id === question.author_id) || null,
-          }))
+          const questionsWithProfiles = questionsData.map((question) => {
+            const authorId = question.author_id || question.user_id || question.created_by || question.author
+            const profile = profiles?.find((profile) => profile.id === authorId)
+
+            return {
+              ...question,
+              user_profiles: profile || null,
+            }
+          })
 
           setQuestions(questionsWithProfiles)
         } else {
