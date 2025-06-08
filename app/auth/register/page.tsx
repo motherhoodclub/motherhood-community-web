@@ -25,11 +25,6 @@ export default function RegisterPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
-  const [phone, setPhone] = useState<string>("")
-  const [otp, setOtp] = useState<string>("")
-  const [showOtpInput, setShowOtpInput] = useState<boolean>(false)
-  const [isPhoneLoading, setIsPhoneLoading] = useState<boolean>(false)
-
   async function handleEmailSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsLoading(true)
@@ -59,71 +54,6 @@ export default function RegisterPage() {
       toast({
         title: "تم إنشاء الحساب بنجاح",
         description: "يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك",
-      })
-    }
-  }
-
-  async function handlePhoneSignUpSendOtp(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsPhoneLoading(true)
-    setError(null)
-    // For sign-up, Supabase creates the user if they don't exist when signInWithOtp is called.
-    // Name can be collected via a profile update step later if needed for phone-only signups.
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      phone: phone,
-      options: {
-        channel: "whatsapp", // Specify WhatsApp channel
-        // data: { name: name } // You can pass user metadata here if needed during signup
-      },
-    })
-    setIsPhoneLoading(false)
-    if (otpError) {
-      setError(`خطأ في إرسال الرمز عبر واتساب: ${otpError.message}`)
-      toast({
-        variant: "destructive",
-        title: "خطأ في إرسال الرمز",
-        description: otpError.message,
-      })
-    } else {
-      setShowOtpInput(true)
-      toast({
-        title: "تم إرسال الرمز عبر واتساب",
-        description: "يرجى التحقق من واتساب وإدخال الرمز لإنشاء الحساب.",
-      })
-    }
-  }
-
-  async function handlePhoneSignUpVerifyOtp(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsPhoneLoading(true)
-    setError(null)
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      phone: phone,
-      token: otp,
-      type: "sms", // Type remains 'sms' for phone OTP verification
-    })
-    setIsPhoneLoading(false)
-    if (verifyError) {
-      setError(`خطأ في التحقق من الرمز: ${verifyError.message}`)
-      toast({
-        variant: "destructive",
-        title: "خطأ في التحقق",
-        description: verifyError.message,
-      })
-    } else if (data.session) {
-      // User is now signed up and signed in.
-      toast({
-        title: "تم إنشاء الحساب وتسجيل الدخول بنجاح",
-        description: "مرحبًا بك في نادي الأمومة!",
-      })
-      router.push("/community")
-      router.refresh()
-    } else {
-      setError("لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.")
-      toast({
-        variant: "destructive",
-        title: "فشل التحقق",
-        description: "لم يتمكن من التحقق من الرمز. حاول مرة أخرى أو اطلب رمزًا جديدًا.",
       })
     }
   }
@@ -178,7 +108,7 @@ export default function RegisterPage() {
               className="text-right"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              disabled={isPhoneLoading || showOtpInput}
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -193,7 +123,7 @@ export default function RegisterPage() {
               className="text-right"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isPhoneLoading || showOtpInput}
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -207,10 +137,10 @@ export default function RegisterPage() {
               className="text-right"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isPhoneLoading || showOtpInput}
+              disabled={isLoading}
             />
           </div>
-          <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading || showOtpInput}>
+          <Button className="w-full" type="submit" disabled={isLoading}>
             {isLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
             إنشاء حساب بالبريد
           </Button>
@@ -241,9 +171,9 @@ export default function RegisterPage() {
                 toast({ variant: "destructive", title: "خطأ Google", description: error.message })
               }
             }}
-            disabled={isLoading || isPhoneLoading || showOtpInput}
+            disabled={isLoading}
           >
-            {isLoading && !isPhoneLoading ? (
+            {isLoading ? (
               <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />
             ) : (
               <Icons.google className="ml-2 h-4 w-4" />
@@ -259,68 +189,6 @@ export default function RegisterPage() {
             <span className="bg-background px-2 text-muted-foreground">أو</span>
           </div>
         </div>
-        {!showOtpInput ? (
-          <form onSubmit={handlePhoneSignUpSendOtp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone-register" className="text-right block">
-                رقم الهاتف (مع رمز الدولة)
-              </Label>
-              <Input
-                id="phone-register"
-                type="tel"
-                placeholder="+201000000000"
-                required
-                className="text-left"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                dir="ltr"
-                disabled={isLoading || isPhoneLoading}
-              />
-            </div>
-            <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading}>
-              {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-              التسجيل عبر واتساب
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={handlePhoneSignUpVerifyOtp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="otp-register" className="text-right block">
-                الرمز المُرسل إلى واتساب
-              </Label>
-              <Input
-                id="otp-register"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="123456"
-                required
-                className="text-center"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                dir="ltr"
-                disabled={isLoading || isPhoneLoading}
-              />
-            </div>
-            <Button className="w-full" type="submit" disabled={isLoading || isPhoneLoading}>
-              {isPhoneLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-              تحقق وإنشاء الحساب
-            </Button>
-            <Button
-              variant="link"
-              type="button"
-              onClick={() => {
-                setShowOtpInput(false)
-                setError(null)
-                setOtp("")
-              }}
-              className="w-full"
-              disabled={isPhoneLoading}
-            >
-              تغيير رقم الهاتف أو استخدام طريقة أخرى
-            </Button>
-          </form>
-        )}
       </CardContent>
       <CardFooter className="text-center">
         <div className="text-sm text-muted-foreground">
