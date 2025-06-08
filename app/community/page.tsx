@@ -117,13 +117,7 @@ export default function CommunityPage() {
       // Now fetch the paginated data
       let query = supabase
         .from("topics")
-        .select(`
-    *,
-    user_profiles!topics_author_id_fkey (
-      username,
-      avatar_url
-    )
-  `)
+        .select("*")
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
 
       if (activeTab === "newest") {
@@ -136,11 +130,33 @@ export default function CommunityPage() {
         query = query.eq("sorting", selectedCategory)
       }
 
-      const { data, error } = await query
+      const { data: topicsData, error } = await query
 
       if (error) throw error
 
-      setTopics(data || [])
+      // Get user profiles for all authors
+      if (topicsData && topicsData.length > 0) {
+        const authorIds = [...new Set(topicsData.map((topic) => topic.author_id).filter(Boolean))]
+
+        if (authorIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("user_profiles")
+            .select("id, username, avatar_url")
+            .in("id", authorIds)
+
+          // Merge profile data with topics
+          const topicsWithProfiles = topicsData.map((topic) => ({
+            ...topic,
+            user_profiles: profiles?.find((profile) => profile.id === topic.author_id) || null,
+          }))
+
+          setTopics(topicsWithProfiles)
+        } else {
+          setTopics(topicsData)
+        }
+      } else {
+        setTopics([])
+      }
     } catch (error) {
       console.error("Error fetching topics:", error)
       setError(error.message)
@@ -170,13 +186,7 @@ export default function CommunityPage() {
       // Now fetch the paginated data
       let query = supabase
         .from("questions")
-        .select(`
-    *,
-    user_profiles!questions_author_id_fkey (
-      username,
-      avatar_url
-    )
-  `)
+        .select("*")
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
 
       if (activeTab === "newest") {
@@ -185,11 +195,33 @@ export default function CommunityPage() {
         query = query.order("likes", { ascending: false })
       }
 
-      const { data, error } = await query
+      const { data: questionsData, error } = await query
 
       if (error) throw error
 
-      setQuestions(data || [])
+      // Get user profiles for all authors
+      if (questionsData && questionsData.length > 0) {
+        const authorIds = [...new Set(questionsData.map((question) => question.author_id).filter(Boolean))]
+
+        if (authorIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("user_profiles")
+            .select("id, username, avatar_url")
+            .in("id", authorIds)
+
+          // Merge profile data with questions
+          const questionsWithProfiles = questionsData.map((question) => ({
+            ...question,
+            user_profiles: profiles?.find((profile) => profile.id === question.author_id) || null,
+          }))
+
+          setQuestions(questionsWithProfiles)
+        } else {
+          setQuestions(questionsData)
+        }
+      } else {
+        setQuestions([])
+      }
     } catch (error) {
       console.error("Error fetching questions:", error)
       setError(error.message)
