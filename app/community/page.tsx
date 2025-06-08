@@ -117,7 +117,13 @@ export default function CommunityPage() {
       // Now fetch the paginated data
       let query = supabase
         .from("topics")
-        .select("*")
+        .select(`
+    *,
+    user_profiles!topics_author_id_fkey (
+      username,
+      avatar_url
+    )
+  `)
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
 
       if (activeTab === "newest") {
@@ -164,7 +170,13 @@ export default function CommunityPage() {
       // Now fetch the paginated data
       let query = supabase
         .from("questions")
-        .select("*")
+        .select(`
+    *,
+    user_profiles!questions_author_id_fkey (
+      username,
+      avatar_url
+    )
+  `)
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
 
       if (activeTab === "newest") {
@@ -632,14 +644,16 @@ export default function CommunityPage() {
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Avatar className="w-6 h-6 sm:w-7 sm:h-7 ring-2 ring-primary/10">
                                     <AvatarImage
-                                      src={item.author_avatar || "/placeholder.svg"}
-                                      alt={item.author_name || "مستخدم"}
+                                      src={item.user_profiles?.avatar_url || item.author_avatar || "/placeholder.svg"}
+                                      alt={item.user_profiles?.username || item.author_name || "مستخدم"}
                                     />
                                     <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                                      {(item.author_name || "م").charAt(0)}
+                                      {(item.user_profiles?.username || item.author_name || "م").charAt(0)}
                                     </AvatarFallback>
                                   </Avatar>
-                                  <span className="font-medium text-xs sm:text-sm">{item.author_name || "مستخدم"}</span>
+                                  <span className="font-medium text-xs sm:text-sm">
+                                    {item.user_profiles?.username || item.author_name || "مستخدم"}
+                                  </span>
                                   <span className="text-muted-foreground/50 hidden xs:inline-block">•</span>
                                   <span
                                     className="text-xs sm:text-sm"
