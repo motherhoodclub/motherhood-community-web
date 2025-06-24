@@ -349,7 +349,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
 
       toast({
         title: "خطأ",
-        description: "فشل في تحديث ال��وضوع: " + (error as Error).message,
+        description: "فشل في تحديث الوضوع: " + (error as Error).message,
         variant: "destructive",
       })
     } finally {
@@ -367,22 +367,26 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
       return
     }
 
-    if (!confirm("هل أنت متأكد من حذف هذا الموضوع؟")) {
+    if (!confirm("هل أنت متأكد من حذف هذا الموضوع؟ سيتم حذف جميع التعليقات والوسائط المرتبطة به.")) {
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase.from("topics").delete().eq("id", topic.id)
+      const response = await fetch(`/api/topics/${topic.id}/delete`, {
+        method: "DELETE",
+      })
 
-      if (error) {
-        throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete topic")
       }
 
       toast({
         title: "تم الحذف",
-        description: "تم حذف الموضوع بنجاح",
+        description: "تم حذف الموضوع وجميع البيانات المرتبطة به بنجاح",
       })
 
       router.push("/community")
@@ -390,7 +394,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
       console.error("Error deleting topic:", error)
       toast({
         title: "خطأ",
-        description: "فشل في حذف الموضوع",
+        description: "فشل في حذف الموضوع: " + (error as Error).message,
         variant: "destructive",
       })
     } finally {
