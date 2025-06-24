@@ -45,7 +45,7 @@ const categories = [
   { name: "الحمل والولادة", icon: "🤰" },
   { name: "تربية الأطفال", icon: "👶" },
   { name: "الصحة والتغذية", icon: "🥗" },
-  { name: "ما يخص اطفال التوحد", icon: "🧠" },
+  { name: "كل ما يخص اطفال التوحد", icon: "🧠" },
 ]
 
 export default function CommunityLayout({
