@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const supabase = createServerComponentClient({ cookies })
-  const decodedCategory = decodeURIComponent(params.category)
+  const decodedCategory = "كل ما يخص اطفال التوحد"
 
   const { data: categoryTopics, error } = await supabase
     .from("topics")
