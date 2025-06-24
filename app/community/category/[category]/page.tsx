@@ -25,6 +25,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const supabase = createServerComponentClient({ cookies })
   const decodedCategory = decodeURIComponent(params.category)
 
+  // Handle specific category name transformation
+  const displayCategory = decodedCategory === "ما يخص اطفال التوحد" ? "كل ما يخص اطفال التوحد" : decodedCategory
+
   const { data: categoryTopics, error } = await supabase
     .from("topics")
     .select("*")
@@ -40,13 +43,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6 text-right">مواضيع {decodedCategory}</h1>
+      <h1 className="text-3xl font-bold mb-6 text-right">مواضيع {displayCategory}</h1>
       <Suspense fallback={<div>جاري التحميل...</div>}>
         <TopicList category={decodedCategory} />
         {categoryTopics.length === 0 && (
           <div className="text-center py-10 bg-gray-50 rounded-lg mt-6">
             <h3 className="text-xl font-medium text-gray-600 mb-2">لا توجد مواضيع في هذا التصنيف حالياً</h3>
-            <p className="text-gray-500 mb-4">كن أول من يضيف موضوعاً في تصنيف {decodedCategory}</p>
+            <p className="text-gray-500 mb-4">كن أول من يضيف موضوعاً في تصنيف {displayCategory}</p>
             {/* Button removed from empty state */}
           </div>
         )}
