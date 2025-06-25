@@ -11,8 +11,19 @@ export async function POST(request: NextRequest) {
   try {
     // Get request body
     const requestData = await request.json()
-    const { id, title, content, category, sorting, is_hot, is_sticky, featured_image_url, media_urls, tags } =
-      requestData
+    const {
+      id,
+      title,
+      content,
+      category,
+      age_group,
+      sorting,
+      is_hot,
+      is_sticky,
+      featured_image_url,
+      media_urls,
+      tags,
+    } = requestData
 
     if (!id) {
       return NextResponse.json({ error: "Topic ID is required" }, { status: 400 })
@@ -39,6 +50,7 @@ export async function POST(request: NextRequest) {
         title,
         content,
         category,
+        age_group,
         sorting: sorting || "",
         is_hot: is_hot || false,
         is_sticky: is_sticky || false,
