@@ -16,12 +16,14 @@ import { Badge } from "@/components/ui/badge"
 // Add a new sorting state and update the categories
 const categories = ["الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "كل ما يخص اطفال التوحد", "أخرى"]
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "نقاشات"]
+const ageGroups = ["عمر من صفر لسنتين", "سنتين ل 6 سنوات", "6-14 سنة"]
 
 export default function NewTopicPage() {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [category, setCategory] = useState("")
   const [sorting, setSorting] = useState("")
+  const [ageGroup, setAgeGroup] = useState("")
   const [featuredImage, setFeaturedImage] = useState<File | null>(null)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const [tags, setTags] = useState<string[]>([])
@@ -72,6 +74,7 @@ export default function NewTopicPage() {
           content,
           category,
           sorting,
+          age_group: ageGroup,
           user_id: user.id,
           featured_image_url: featuredImageUrl,
           media_urls: mediaUrls,
@@ -175,6 +178,23 @@ export default function NewTopicPage() {
                     {sortingOptions.map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="age-group" className="block text-sm font-medium text-gray-700 text-right">
+                  الفئة العمرية
+                </Label>
+                <Select value={ageGroup} onValueChange={setAgeGroup}>
+                  <SelectTrigger id="age-group">
+                    <SelectValue placeholder="اختاري الفئة العمرية (اختياري)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ageGroups.map((group) => (
+                      <SelectItem key={group} value={group}>
+                        {group}
                       </SelectItem>
                     ))}
                   </SelectContent>
