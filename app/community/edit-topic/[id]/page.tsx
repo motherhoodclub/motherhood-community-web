@@ -24,7 +24,7 @@ import { ArrowRight, Save, Trash, Loader2 } from "lucide-react"
 
 const categories = ["الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "النمو والتطور", "الدعم النفسي", "أخرى"]
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "بدون تصنيف"]
-const ageGroups = ["0-2 سنة", "2-6 سنوات", "6-14 سنة"]
+const ageGroups = ["عمر من صفر لسنتين", "سنتين ل 6 سنوات", "سنتين ل 6 سنوات"]
 
 export default function EditTopicPage({ params }: { params: { id: string } }) {
   const [topic, setTopic] = useState({
