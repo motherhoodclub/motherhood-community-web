@@ -45,6 +45,7 @@ interface Topic {
   is_hot?: boolean
   is_sticky?: boolean
   loom_embed_code?: string
+  age_group?: string | null
   user_profile?: {
     username: string
     avatar_url: string
@@ -103,7 +104,7 @@ export default function TopicPage({ params }: { params: { id: string } }) {
       const timestamp = new Date().getTime()
       const { data: topicData, error: topicError } = await supabase
         .from("topics")
-        .select("*")
+        .select("*, age_group")
         .eq("id", params.id)
         .single()
 
@@ -632,6 +633,12 @@ export default function TopicPage({ params }: { params: { id: string } }) {
               <CardTitle className="text-xl sm:text-2xl break-words">{topic.title}</CardTitle>
               <CardDescription>
                 {formatArabicDateTime(topic.created_at)} • بواسطة {topic.user_profile?.username}
+                {topic.age_group && (
+                  <>
+                    <br />
+                    <span className="text-sm text-muted-foreground">الفئة العمرية: {topic.age_group}</span>
+                  </>
+                )}
               </CardDescription>
               {topic.sorting && (
                 <Badge variant="outline" className="mt-2">
