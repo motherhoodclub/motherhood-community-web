@@ -48,6 +48,12 @@ const categories = [
   { name: "كل ما يخص اطفال التوحد", icon: "🧠" },
 ]
 
+const ageGroups = [
+  { name: "عمر من صفر لسنتين", icon: "👶" },
+  { name: "سنتين ل 6 سنوات", icon: "🧒" },
+  { name: "6-14 سنة", icon: "👦" },
+]
+
 export default function CommunityLayout({
   children,
 }: {
@@ -709,6 +715,33 @@ export default function CommunityLayout({
               </div>
 
               <div>
+                <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
+                  الفئة العمرية
+                </h3>
+                <div className="space-y-2">
+                  {ageGroups.map((ageGroup) => (
+                    <Link
+                      key={ageGroup.name}
+                      href={`/community/age-group/${encodeURIComponent(ageGroup.name)}`}
+                      className={cn(
+                        "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
+                        isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                          {ageGroup.icon}
+                        </span>
+                        <span className={cn("truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                          {ageGroup.name}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <h3
                   className={cn(
                     "text-sm font-semibold mb-3 flex items-center",
@@ -1087,6 +1120,39 @@ export default function CommunityLayout({
                   </span>
                   <span className={cn("truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
                     {category.name}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Age Groups */}
+        <div
+          className={cn(
+            "p-4 rounded-xl border transition-colors duration-200",
+            isDarkMode ? "bg-gray-900/50 border-gray-800" : "bg-gray-50 border-gray-200",
+          )}
+        >
+          <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
+            الفئة العمرية
+          </h3>
+          <div className="grid grid-cols-1 gap-2">
+            {ageGroups.map((ageGroup) => (
+              <Link
+                key={ageGroup.name}
+                href={`/community/age-group/${encodeURIComponent(ageGroup.name)}`}
+                className={cn(
+                  "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
+                  isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                    {ageGroup.icon}
+                  </span>
+                  <span className={cn("truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                    {ageGroup.name}
                   </span>
                 </div>
               </Link>
