@@ -24,6 +24,7 @@ import { ArrowRight, Save, Trash, Loader2 } from "lucide-react"
 
 const categories = ["الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "النمو والتطور", "الدعم النفسي", "أخرى"]
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "بدون تصنيف"]
+const ageGroups = ["0-2 سنوات", "3-5 سنوات", "6+ سنوات"]
 
 export default function EditTopicPage({ params }: { params: { id: string } }) {
   const [topic, setTopic] = useState({
@@ -31,6 +32,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
     title: "",
     content: "",
     category: "",
+    age_group: "",
     featured_image_url: null,
     media_urls: [],
     tags: [],
@@ -115,6 +117,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
           title: data.title || "",
           content: data.content || "",
           category: data.category || "",
+          age_group: data.age_group || "",
           featured_image_url: data.featured_image_url,
           media_urls: data.media_urls || [],
           tags: data.tags || [],
@@ -165,6 +168,11 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
   const handleSortingChange = (value: string) => {
     const newValue = value === "بدون تصنيف" ? "" : value
     setTopic((prev) => ({ ...prev, sorting: newValue }))
+  }
+
+  const handleAgeGroupChange = (value: string) => {
+    const newValue = value === "بدون فئة عمرية" ? "" : value
+    setTopic((prev) => ({ ...prev, age_group: newValue }))
   }
 
   const handleFeaturedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,6 +325,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
           title: topic.title,
           content: topic.content,
           category: topic.category,
+          age_group: topic.age_group,
           sorting: topic.sorting,
           is_hot: topic.is_hot,
           is_sticky: topic.is_sticky,
@@ -481,6 +490,23 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
                     {sortingOptions.map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="age_group">الفئة العمرية</Label>
+                <Select value={topic.age_group || "بدون فئة عمرية"} onValueChange={handleAgeGroupChange}>
+                  <SelectTrigger id="age_group" className="text-right">
+                    <SelectValue placeholder="اختر الفئة العمرية" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="بدون فئة عمرية">بدون فئة عمرية</SelectItem>
+                    {ageGroups.map((ageGroup) => (
+                      <SelectItem key={ageGroup} value={ageGroup}>
+                        {ageGroup}
                       </SelectItem>
                     ))}
                   </SelectContent>
