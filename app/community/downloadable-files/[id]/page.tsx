@@ -328,7 +328,7 @@ export default function DownloadableFileDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <iframe
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`}
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
                     className="w-full h-96 border rounded-lg"
                     title="File Preview"
                   />
