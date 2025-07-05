@@ -46,11 +46,17 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight
+      }
+    }
   }
 
   useEffect(() => {
@@ -297,81 +303,85 @@ export default function ChatPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Chat Area */}
         <div className="lg:col-span-3">
-          <Card className="h-[70vh] min-h-[500px] max-h-[800px] flex flex-col">
-            <CardHeader className="pb-3">
+          <Card className="h-[600px] flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
                 المحادثة العامة
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col p-0">
+            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
               {/* Messages */}
-              <ScrollArea className="flex-1 px-4 h-full">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-muted-foreground">جاري تحميل الرسائل...</p>
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea ref={scrollAreaRef} className="h-full px-4">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                        <p className="text-muted-foreground">جاري تحميل الرسائل...</p>
+                      </div>
                     </div>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">لا توجد رسائل بعد</p>
-                      <p className="text-sm text-muted-foreground">كن أول من يبدأ المحادثة!</p>
+                  ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">لا توجد رسائل بعد</p>
+                        <p className="text-sm text-muted-foreground">كن أول من يبدأ المحادثة!</p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4 py-4 min-h-full">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={cn("flex gap-3", message.user_id === user.id ? "flex-row-reverse" : "flex-row")}
-                      >
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarImage src={message.user_profiles?.avatar_url || "/placeholder.svg"} />
-                          <AvatarFallback>{message.user_profiles?.username?.[0] || "م"}</AvatarFallback>
-                        </Avatar>
-
+                  ) : (
+                    <div className="space-y-4 py-4">
+                      {messages.map((message) => (
                         <div
-                          className={cn(
-                            "flex flex-col max-w-[70%]",
-                            message.user_id === user.id ? "items-end" : "items-start",
-                          )}
+                          key={message.id}
+                          className={cn("flex gap-3", message.user_id === user.id ? "flex-row-reverse" : "flex-row")}
                         >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium">{message.user_profiles?.username || "مستخدم"}</span>
-                            {message.user_profiles?.is_admin && (
-                              <Badge variant="secondary" className="text-xs">
-                                مشرف
-                              </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatArabicDate(new Date(message.created_at))}
-                            </span>
-                          </div>
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarImage src={message.user_profiles?.avatar_url || "/placeholder.svg"} />
+                            <AvatarFallback>{message.user_profiles?.username?.[0] || "م"}</AvatarFallback>
+                          </Avatar>
 
                           <div
                             className={cn(
-                              "rounded-lg px-3 py-2 text-sm",
-                              message.user_id === user.id ? "bg-primary text-primary-foreground" : "bg-muted",
+                              "flex flex-col max-w-[70%] min-w-0",
+                              message.user_id === user.id ? "items-end" : "items-start",
                             )}
                           >
-                            {message.content}
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-sm font-medium truncate">
+                                {message.user_profiles?.username || "مستخدم"}
+                              </span>
+                              {message.user_profiles?.is_admin && (
+                                <Badge variant="secondary" className="text-xs">
+                                  مشرف
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {formatArabicDate(new Date(message.created_at))}
+                              </span>
+                            </div>
+
+                            <div
+                              className={cn(
+                                "rounded-lg px-3 py-2 text-sm break-words",
+                                message.user_id === user.id ? "bg-primary text-primary-foreground" : "bg-muted",
+                              )}
+                            >
+                              {message.content}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-              </ScrollArea>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
 
               {/* Message Input */}
-              <div className="p-4 border-t">
+              <div className="p-4 border-t flex-shrink-0">
                 <form onSubmit={sendMessage} className="flex gap-2">
                   <Input
                     value={newMessage}
