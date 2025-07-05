@@ -22,6 +22,7 @@ import {
   ShoppingBag,
   Instagram,
   MessageCircle,
+  FileText,
 } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
@@ -71,6 +72,7 @@ export default function CommunityLayout({
   const [popularTopics, setPopularTopics] = useState([])
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [downloadableFiles, setDownloadableFiles] = useState([])
 
   useEffect(() => {
     const getUser = async () => {
@@ -351,6 +353,23 @@ export default function CommunityLayout({
       return () => clearInterval(interval)
     }
   }, [user, supabase])
+
+  useEffect(() => {
+    const fetchDownloadableFiles = async () => {
+      try {
+        const response = await fetch("/api/downloadable-files?limit=4")
+        const data = await response.json()
+
+        if (response.ok) {
+          setDownloadableFiles(data.files || [])
+        }
+      } catch (error) {
+        console.error("Error fetching downloadable files:", error)
+      }
+    }
+
+    fetchDownloadableFiles()
+  }, [])
 
   useEffect(() => {
     if (isDarkMode) {
@@ -921,6 +940,79 @@ export default function CommunityLayout({
                 </div>
               </div>
 
+              <div>
+                <h3
+                  className={cn(
+                    "text-sm font-semibold mb-3 flex items-center",
+                    isDarkMode ? "text-gray-400" : "text-gray-600",
+                  )}
+                >
+                  <FileText className="h-4 w-4 ml-1.5" />
+                  ملفات قابلة للتحميل
+                </h3>
+                <div className="space-y-3">
+                  {downloadableFiles.length > 0 ? (
+                    downloadableFiles.map((file) => (
+                      <Link key={file.id} href={`/community/downloadable-files/${file.id}`}>
+                        <div className="flex items-center space-x-3 space-x-reverse group">
+                          <div className="relative h-12 w-12 rounded-lg overflow-hidden">
+                            <img
+                              src={
+                                file.featured_image_url
+                                  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.featured_image_url}`
+                                  : "/placeholder.svg?height=48&width=48"
+                              }
+                              alt={file.title}
+                              className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              onError={(e) => {
+                                e.currentTarget.src = "/placeholder.svg?height=48&width=48"
+                              }}
+                            />
+                            <div
+                              className={cn(
+                                "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300",
+                                isDarkMode ? "bg-primary" : "bg-primary",
+                              )}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h4
+                              className={cn(
+                                "font-medium group-hover:text-primary transition-colors duration-200 line-clamp-2",
+                                isDarkMode ? "text-gray-200" : "text-gray-800",
+                              )}
+                            >
+                              {file.title}
+                            </h4>
+                            <p className={cn("text-xs", isDarkMode ? "text-gray-400" : "text-gray-500")}>
+                              {file.file_type?.split("/")[1]?.toUpperCase() || "ملف"} • {file.download_count} تحميل
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className={isDarkMode ? "text-gray-400 text-sm" : "text-gray-500 text-sm"}>
+                      لا توجد ملفات متاحة حالياً
+                    </p>
+                  )}
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "w-full mt-2 rounded-lg transition-colors duration-200",
+                      isDarkMode
+                        ? "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"
+                        : "bg-white hover:bg-gray-100 text-gray-700 border-gray-300",
+                    )}
+                  >
+                    <Link href="/community/downloadable-files">عرض جميع الملفات</Link>
+                  </Button>
+                </div>
+              </div>
+
               <Separator className={isDarkMode ? "bg-gray-800" : "bg-gray-200"} />
 
               <div>
@@ -1323,6 +1415,85 @@ export default function CommunityLayout({
               )}
             >
               <Link href="/community/workshops">عرض جميع اللقاءات</Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Downloadable Files */}
+        <div
+          className={cn(
+            "p-4 rounded-xl border transition-colors duration-200",
+            isDarkMode ? "bg-gray-900/50 border-gray-800" : "bg-gray-50 border-gray-200",
+          )}
+        >
+          <h3
+            className={cn(
+              "text-sm font-semibold mb-3 flex items-center",
+              isDarkMode ? "text-gray-400" : "text-gray-600",
+            )}
+          >
+            <FileText className="h-4 w-4 ml-1.5" />
+            ملفات قابلة للتحميل
+          </h3>
+          <div className="space-y-3">
+            {downloadableFiles.length > 0 ? (
+              downloadableFiles.map((file) => (
+                <Link key={file.id} href={`/community/downloadable-files/${file.id}`}>
+                  <div className="flex items-center space-x-3 space-x-reverse group">
+                    <div className="relative h-12 w-12 rounded-lg overflow-hidden">
+                      <img
+                        src={
+                          file.featured_image_url
+                            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.featured_image_url}`
+                            : "/placeholder.svg?height=48&width=48"
+                        }
+                        alt={file.title}
+                        className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg?height=48&width=48"
+                        }}
+                      />
+                      <div
+                        className={cn(
+                          "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300",
+                          isDarkMode ? "bg-primary" : "bg-primary",
+                        )}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h4
+                        className={cn(
+                          "font-medium group-hover:text-primary transition-colors duration-200 line-clamp-2",
+                          isDarkMode ? "text-gray-200" : "text-gray-800",
+                        )}
+                      >
+                        {file.title}
+                      </h4>
+                      <p className={cn("text-xs", isDarkMode ? "text-gray-400" : "text-gray-500")}>
+                        {file.file_type?.split("/")[1]?.toUpperCase() || "ملف"} • {file.download_count} تحميل
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <p className={isDarkMode ? "text-gray-400 text-sm" : "text-gray-500 text-sm"}>
+                لا توجد ملفات متاحة حالياً
+              </p>
+            )}
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className={cn(
+                "w-full mt-2 rounded-lg transition-colors duration-200",
+                isDarkMode
+                  ? "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"
+                  : "bg-white hover:bg-gray-100 text-gray-700 border-gray-300",
+              )}
+            >
+              <Link href="/community/downloadable-files">عرض جميع الملفات</Link>
             </Button>
           </div>
         </div>
