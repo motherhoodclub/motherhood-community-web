@@ -77,9 +77,16 @@ export default function FloatingChat() {
   }, [supabase])
 
   useEffect(() => {
-    const fetchMessages = async () => {
+    if (!user || !userProfile) return
+
+    let messagesChannel: any = null
+    let presenceChannel: any = null
+    let presenceInterval: NodeJS.Timeout | null = null
+
+    const setupChat = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch initial messages
+        const { data: messagesData, error: messagesError } = await supabase
           .from("chat_messages")
           .select(`
             id,
@@ -95,18 +102,11 @@ export default function FloatingChat() {
           .order("created_at", { ascending: true })
           .limit(50)
 
-        if (error) throw error
-        setMessages(data || [])
-      } catch (error) {
-        console.error("Error fetching messages:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+        if (messagesError) throw messagesError
+        setMessages(messagesData || [])
 
-    const fetchOnlineUsers = async () => {
-      try {
-        const { data, error } = await supabase
+        // Fetch initial online users
+        const { data: presenceData, error: presenceError } = await supabase
           .from("chat_presence")
           .select(`
             user_id,
@@ -119,10 +119,10 @@ export default function FloatingChat() {
           `)
           .gte("last_seen", new Date(Date.now() - 5 * 60 * 1000).toISOString())
 
-        if (error) throw error
+        if (presenceError) throw presenceError
 
         const formattedUsers =
-          data?.map((item) => ({
+          presenceData?.map((item) => ({
             user_id: item.user_id,
             username: item.user_profiles?.username || "مستخدم",
             avatar_url: item.user_profiles?.avatar_url,
@@ -131,84 +131,128 @@ export default function FloatingChat() {
           })) || []
 
         setOnlineUsers(formattedUsers)
-      } catch (error) {
-        console.error("Error fetching online users:", error)
-      }
-    }
+        setIsLoading(false)
 
-    if (user && userProfile) {
-      fetchMessages()
-      fetchOnlineUsers()
+        // Update presence
+        const updatePresence = async () => {
+          try {
+            await supabase.from("chat_presence").upsert({
+              user_id: user.id,
+              last_seen: new Date().toISOString(),
+            })
+          } catch (error) {
+            console.error("Error updating presence:", error)
+          }
+        }
 
-      const updatePresence = async () => {
-        await supabase.from("chat_presence").upsert({
-          user_id: user.id,
-          last_seen: new Date().toISOString(),
-        })
-      }
+        await updatePresence()
+        presenceInterval = setInterval(updatePresence, 30000)
 
-      updatePresence()
-      const presenceInterval = setInterval(updatePresence, 30000)
+        // Setup real-time subscriptions with unique channel names
+        const channelId = `chat_${Date.now()}_${Math.random()}`
 
-      const messagesChannel = supabase
-        .channel("chat_messages")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "chat_messages",
-          },
-          async (payload) => {
-            const { data } = await supabase
-              .from("chat_messages")
-              .select(`
-                id,
-                content,
-                user_id,
-                created_at,
-                user_profiles (
-                  username,
-                  avatar_url,
-                  is_admin
-                )
-              `)
-              .eq("id", payload.new.id)
-              .single()
+        messagesChannel = supabase
+          .channel(`messages_${channelId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "chat_messages",
+            },
+            async (payload) => {
+              try {
+                const { data } = await supabase
+                  .from("chat_messages")
+                  .select(`
+                    id,
+                    content,
+                    user_id,
+                    created_at,
+                    user_profiles (
+                      username,
+                      avatar_url,
+                      is_admin
+                    )
+                  `)
+                  .eq("id", payload.new.id)
+                  .single()
 
-            if (data) {
-              setMessages((prev) => [...prev, data])
-              // Increment unread count if chat is closed or minimized
-              if (!isOpen || isMinimized) {
-                setUnreadCount((prev) => prev + 1)
+                if (data) {
+                  setMessages((prev) => [...prev, data])
+                  // Increment unread count if chat is closed or minimized
+                  if (!isOpen || isMinimized) {
+                    setUnreadCount((prev) => prev + 1)
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching new message:", error)
               }
-            }
-          },
-        )
-        .subscribe()
+            },
+          )
+          .subscribe()
 
-      const presenceChannel = supabase
-        .channel("chat_presence")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "chat_presence",
-          },
-          () => {
-            fetchOnlineUsers()
-          },
-        )
-        .subscribe()
+        presenceChannel = supabase
+          .channel(`presence_${channelId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "chat_presence",
+            },
+            async () => {
+              try {
+                const { data } = await supabase
+                  .from("chat_presence")
+                  .select(`
+                    user_id,
+                    user_profiles (
+                      username,
+                      avatar_url,
+                      is_admin
+                    ),
+                    last_seen
+                  `)
+                  .gte("last_seen", new Date(Date.now() - 5 * 60 * 1000).toISOString())
 
-      return () => {
-        clearInterval(presenceInterval)
-        messagesChannel.unsubscribe()
-        presenceChannel.unsubscribe()
+                const formattedUsers =
+                  data?.map((item) => ({
+                    user_id: item.user_id,
+                    username: item.user_profiles?.username || "مستخدم",
+                    avatar_url: item.user_profiles?.avatar_url,
+                    is_admin: item.user_profiles?.is_admin || false,
+                    last_seen: item.last_seen,
+                  })) || []
+
+                setOnlineUsers(formattedUsers)
+              } catch (error) {
+                console.error("Error fetching online users:", error)
+              }
+            },
+          )
+          .subscribe()
+      } catch (error) {
+        console.error("Error setting up chat:", error)
+        setIsLoading(false)
       }
     }
-  }, [user, userProfile, supabase, isOpen, isMinimized])
+
+    setupChat()
+
+    // Cleanup function
+    return () => {
+      if (presenceInterval) {
+        clearInterval(presenceInterval)
+      }
+      if (messagesChannel) {
+        supabase.removeChannel(messagesChannel)
+      }
+      if (presenceChannel) {
+        supabase.removeChannel(presenceChannel)
+      }
+    }
+  }, [user, userProfile]) // Only depend on user and profile objects
 
   useEffect(() => {
     scrollToBottom()
