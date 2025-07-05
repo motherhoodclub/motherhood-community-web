@@ -297,7 +297,7 @@ export default function ChatPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Chat Area */}
         <div className="lg:col-span-3">
-          <Card className="h-[calc(100vh-200px)] flex flex-col">
+          <Card className="h-[70vh] min-h-[500px] max-h-[800px] flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
@@ -307,7 +307,7 @@ export default function ChatPage() {
 
             <CardContent className="flex-1 flex flex-col p-0">
               {/* Messages */}
-              <ScrollArea className="flex-1 px-4 min-h-0">
+              <ScrollArea className="flex-1 px-4 h-full">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
@@ -324,7 +324,7 @@ export default function ChatPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4 py-4">
+                  <div className="space-y-4 py-4 min-h-full">
                     {messages.map((message) => (
                       <div
                         key={message.id}
@@ -405,7 +405,7 @@ export default function ChatPage() {
             </CardHeader>
 
             <CardContent className="p-0">
-              <ScrollArea className="h-[calc(100vh-350px)] min-h-[300px]">
+              <ScrollArea className="h-[500px]">
                 {onlineUsers.length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">لا يوجد مستخدمون متصلون</div>
                 ) : (
