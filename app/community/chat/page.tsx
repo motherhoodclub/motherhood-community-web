@@ -44,6 +44,7 @@ export default function ChatPage() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClientComponentClient()
   const { toast } = useToast()
@@ -55,6 +56,7 @@ export default function ChatPage() {
   useEffect(() => {
     const getUser = async () => {
       try {
+        setIsAuthLoading(true)
         const {
           data: { user },
         } = await supabase.auth.getUser()
@@ -69,6 +71,8 @@ export default function ChatPage() {
         }
       } catch (error) {
         console.error("Error fetching user:", error)
+      } finally {
+        setIsAuthLoading(false)
       }
     }
     getUser()
@@ -239,6 +243,22 @@ export default function ChatPage() {
     } finally {
       setIsSending(false)
     }
+  }
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold mb-2">جاري التحميل</h3>
+              <p className="text-muted-foreground">لحظة من فضلك...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (!user || !userProfile) {
