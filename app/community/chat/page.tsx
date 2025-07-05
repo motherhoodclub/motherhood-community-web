@@ -40,6 +40,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [user, setUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
@@ -57,7 +58,15 @@ export default function ChatPage() {
         const {
           data: { user },
         } = await supabase.auth.getUser()
-        setUser(user)
+
+        if (user) {
+          setUser(user)
+
+          // Get user profile
+          const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
+
+          setUserProfile(profile)
+        }
       } catch (error) {
         console.error("Error fetching user:", error)
       }
@@ -130,7 +139,7 @@ export default function ChatPage() {
       }
     }
 
-    if (user) {
+    if (user && userProfile) {
       fetchMessages()
       fetchOnlineUsers()
 
@@ -201,7 +210,7 @@ export default function ChatPage() {
         presenceChannel.unsubscribe()
       }
     }
-  }, [user, supabase, toast])
+  }, [user, userProfile, supabase, toast])
 
   useEffect(() => {
     scrollToBottom()
@@ -209,7 +218,7 @@ export default function ChatPage() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !user || isSending) return
+    if (!newMessage.trim() || !user || !userProfile || isSending) return
 
     setIsSending(true)
     try {
@@ -232,7 +241,7 @@ export default function ChatPage() {
     }
   }
 
-  if (!user) {
+  if (!user || !userProfile) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="w-full max-w-md">

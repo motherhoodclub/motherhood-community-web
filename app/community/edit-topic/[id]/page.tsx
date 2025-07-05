@@ -222,7 +222,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
       // Upload new featured image if selected
       if (featuredImage) {
         setUploadProgress(10)
-        setUpdateStatus("جاري رفع الصورة الرئيسية...")
+        setUpdateStatus("جاري رفع ��لصورة الرئيسية...")
 
         const { data: featuredData, error: featuredError } = await supabase.storage
           .from("uploads")

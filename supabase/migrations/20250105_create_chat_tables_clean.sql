@@ -1,5 +1,9 @@
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS chat_messages CASCADE;
+DROP TABLE IF EXISTS chat_presence CASCADE;
+
 -- Create chat_messages table
-CREATE TABLE IF NOT EXISTS chat_messages (
+CREATE TABLE chat_messages (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     content TEXT NOT NULL,
     user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
@@ -8,7 +12,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 
 -- Create chat_presence table for tracking online users
-CREATE TABLE IF NOT EXISTS chat_presence (
+CREATE TABLE chat_presence (
     user_id UUID PRIMARY KEY REFERENCES user_profiles(id) ON DELETE CASCADE,
     last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -16,32 +20,32 @@ CREATE TABLE IF NOT EXISTS chat_presence (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON chat_messages(user_id);
-CREATE INDEX IF NOT EXISTS idx_chat_presence_last_seen ON chat_presence(last_seen DESC);
+CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at DESC);
+CREATE INDEX idx_chat_messages_user_id ON chat_messages(user_id);
+CREATE INDEX idx_chat_presence_last_seen ON chat_presence(last_seen DESC);
 
 -- Enable RLS (Row Level Security)
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_presence ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for chat_messages
-CREATE POLICY "Users can view all chat messages" ON chat_messages
+CREATE POLICY "chat_messages_select_policy" ON chat_messages
     FOR SELECT USING (true);
 
-CREATE POLICY "Users can insert their own messages" ON chat_messages
+CREATE POLICY "chat_messages_insert_policy" ON chat_messages
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own messages" ON chat_messages
+CREATE POLICY "chat_messages_update_policy" ON chat_messages
     FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own messages" ON chat_messages
+CREATE POLICY "chat_messages_delete_policy" ON chat_messages
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Create policies for chat_presence
-CREATE POLICY "Users can view all presence data" ON chat_presence
+CREATE POLICY "chat_presence_select_policy" ON chat_presence
     FOR SELECT USING (true);
 
-CREATE POLICY "Users can manage their own presence" ON chat_presence
+CREATE POLICY "chat_presence_all_policy" ON chat_presence
     FOR ALL USING (auth.uid() = user_id);
 
 -- Create function to automatically update updated_at timestamp
