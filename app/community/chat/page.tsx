@@ -50,7 +50,7 @@ export default function ChatPage() {
   const { toast } = useToast()
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
   }
 
   useEffect(() => {
@@ -217,7 +217,10 @@ export default function ChatPage() {
   }, [user, userProfile, supabase, toast])
 
   useEffect(() => {
-    scrollToBottom()
+    const timer = setTimeout(() => {
+      scrollToBottom()
+    }, 100)
+    return () => clearTimeout(timer)
   }, [messages])
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -294,7 +297,7 @@ export default function ChatPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Chat Area */}
         <div className="lg:col-span-3">
-          <Card className="h-[600px] flex flex-col">
+          <Card className="h-[calc(100vh-200px)] flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
@@ -304,7 +307,7 @@ export default function ChatPage() {
 
             <CardContent className="flex-1 flex flex-col p-0">
               {/* Messages */}
-              <ScrollArea className="flex-1 px-4">
+              <ScrollArea className="flex-1 px-4 min-h-0">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
@@ -402,7 +405,7 @@ export default function ChatPage() {
             </CardHeader>
 
             <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
+              <ScrollArea className="h-[calc(100vh-350px)] min-h-[300px]">
                 {onlineUsers.length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">لا يوجد مستخدمون متصلون</div>
                 ) : (
