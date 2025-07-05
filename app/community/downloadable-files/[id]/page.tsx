@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Download, Eye, FileText, ExternalLink, ArrowLeft, Edit, Trash2 } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -24,7 +24,7 @@ interface DownloadableFile {
   file_size: number | null
   download_count: number
   created_at: string
-  user_profiles: {
+  user_profiles?: {
     username: string
     avatar_url: string | null
   }
@@ -56,13 +56,7 @@ export default function DownloadableFileDetailsPage() {
       if (user) {
         const { data: userProfile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single()
 
-        const adminStatus =
-          userProfile?.is_admin === true ||
-          userProfile?.is_admin === "true" ||
-          userProfile?.is_admin === 1 ||
-          userProfile?.is_admin === "1"
-
-        setIsAdmin(adminStatus)
+        setIsAdmin(!!userProfile?.is_admin)
       }
     } catch (error) {
       console.error("Error checking admin status:", error)
@@ -233,9 +227,11 @@ export default function DownloadableFileDetailsPage() {
 
           {isAdmin && (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 ml-2" />
-                تعديل
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/community/downloadable-files/${file.id}/edit`}>
+                  <Edit className="h-4 w-4 ml-2" />
+                  تعديل
+                </Link>
               </Button>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
                 <Trash2 className="h-4 w-4 ml-2" />
@@ -302,7 +298,7 @@ export default function DownloadableFileDetailsPage() {
                   </div>
                   <div className="text-right">
                     <span className="font-medium">أضيف بواسطة:</span>
-                    <span className="mr-2">{file.user_profiles?.username || "مجهول"}</span>
+                    <span className="mr-2">مشرف</span>
                   </div>
                 </div>
 
@@ -311,11 +307,10 @@ export default function DownloadableFileDetailsPage() {
                 {/* Author Info */}
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={file.user_profiles?.avatar_url || ""} />
-                    <AvatarFallback>{file.user_profiles?.username?.[0] || "م"}</AvatarFallback>
+                    <AvatarFallback>م</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{file.user_profiles?.username || "مجهول"}</p>
+                    <p className="font-medium">مشرف</p>
                     <p className="text-sm text-muted-foreground">مشرف</p>
                   </div>
                 </div>
