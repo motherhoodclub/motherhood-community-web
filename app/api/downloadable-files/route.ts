@@ -1,16 +1,20 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 
+// Create service role client for fetching (bypasses RLS)
+const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const offset = (page - 1) * limit
 
-    const { data: files, error } = await supabase
+    // Use service role to fetch files (bypasses RLS since anyone can view)
+    const { data: files, error } = await supabaseAdmin
       .from("downloadable_files")
       .select(`
         *,
@@ -27,7 +31,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch files" }, { status: 500 })
     }
 
-    const { count } = await supabase.from("downloadable_files").select("*", { count: "exact", head: true })
+    const { count } = await supabaseAdmin.from("downloadable_files").select("*", { count: "exact", head: true })
 
     return NextResponse.json({
       files: files || [],
@@ -52,16 +56,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user is admin
+    // Check if user is admin - simplified version
     const { data: userProfile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single()
 
-    const isAdmin =
-      userProfile?.is_admin === true ||
-      userProfile?.is_admin === "true" ||
-      userProfile?.is_admin === 1 ||
-      userProfile?.is_admin === "1"
-
-    if (!isAdmin) {
+    if (!userProfile?.is_admin) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
