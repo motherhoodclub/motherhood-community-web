@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -86,7 +88,10 @@ export default function DownloadableFileDetailsPage() {
     }
   }
 
-  const handleDownload = async () => {
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
     if (!file) return
 
     setIsDownloading(true)
@@ -103,6 +108,7 @@ export default function DownloadableFileDetailsPage() {
         const link = document.createElement("a")
         link.href = fileUrl
         link.download = file.title
+        link.target = "_blank"
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -176,6 +182,11 @@ export default function DownloadableFileDetailsPage() {
 
   const canPreview = (fileType: string | null) => {
     return fileType?.includes("pdf") || false
+  }
+
+  const getPreviewUrl = (fileUrl: string) => {
+    const baseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${fileUrl}`
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(baseUrl)}&embedded=true`
   }
 
   if (isLoading) {
@@ -328,9 +339,10 @@ export default function DownloadableFileDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <iframe
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
+                    src={getPreviewUrl(file.file_url)}
                     className="w-full h-96 border rounded-lg"
                     title="File Preview"
+                    frameBorder="0"
                   />
                 </CardContent>
               </Card>
