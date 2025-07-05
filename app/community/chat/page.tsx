@@ -453,20 +453,6 @@ export default function ChatPage() {
           </Card>
 
           <Separator className="my-4" />
-
-          {/* Chat Guidelines */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">قواعد المحادثة</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>• احترم الآخرين وكن مهذباً</p>
-              <p>• لا تشارك معلومات شخصية</p>
-              <p>• ابق في الموضوع</p>
-              <p>• لا تستخدم لغة غير لائقة</p>
-              <p>• ساعد في خلق بيئة إيجابية</p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
