@@ -3,21 +3,13 @@ import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 
-// Create service role client for fetching (bypasses RLS)
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Use service role to fetch file details (bypasses RLS since anyone can view)
     const { data: file, error } = await supabaseAdmin
       .from("downloadable_files")
-      .select(`
-        *,
-        user_profiles!downloadable_files_user_id_fkey (
-          username,
-          avatar_url
-        )
-      `)
+      .select("*")
       .eq("id", params.id)
       .single()
 
@@ -44,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user is admin - simplified version
+    // Check if user is admin
     const { data: userProfile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single()
 
     if (!userProfile?.is_admin) {
@@ -92,7 +84,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user is admin - simplified version
+    // Check if user is admin
     const { data: userProfile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single()
 
     if (!userProfile?.is_admin) {

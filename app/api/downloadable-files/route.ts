@@ -16,13 +16,7 @@ export async function GET(request: NextRequest) {
     // Use service role to fetch files (bypasses RLS since anyone can view)
     const { data: files, error } = await supabaseAdmin
       .from("downloadable_files")
-      .select(`
-        *,
-        user_profiles!downloadable_files_user_id_fkey (
-          username,
-          avatar_url
-        )
-      `)
+      .select("*")
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1)
 
