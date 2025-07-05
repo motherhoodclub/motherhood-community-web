@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/components/auth/use-session"
 import { formatArabicDate } from "@/lib/date-utils"
+import FloatingChat from "@/components/floating-chat"
 
 const categories = [
   { name: "الحمل والولادة", icon: "🤰" },
@@ -1504,6 +1505,9 @@ export default function CommunityLayout({
           </div>
         </div>
       </div>
+
+      {/* Floating Chat */}
+      <FloatingChat />
     </div>
   )
 }
