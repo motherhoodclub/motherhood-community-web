@@ -97,34 +97,40 @@ export default function DownloadableFileDetailsPage() {
     setIsDownloading(true)
 
     try {
-      // Increment download count
+      // Increment download count first
       await fetch(`/api/downloadable-files/${file.id}/download`, {
         method: "POST",
       })
 
-      // Download the file - mobile-friendly approach
       if (file.file_url) {
         const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`
 
-        // For mobile compatibility, use window.open with proper attributes
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        // Mobile-first approach: fetch the file and create blob URL
+        try {
+          const response = await fetch(fileUrl)
+          const blob = await response.blob()
+          const blobUrl = window.URL.createObjectURL(blob)
 
-        if (isMobile) {
-          // On mobile, open in new tab/window which triggers download
-          window.open(fileUrl, "_blank", "noopener,noreferrer")
-        } else {
-          // Desktop approach with programmatic download
+          // Create download link
           const link = document.createElement("a")
-          link.href = fileUrl
-          link.download = file.title
-          link.target = "_blank"
-          link.rel = "noopener noreferrer"
+          link.href = blobUrl
+          link.download = file.title || "download"
+          link.style.display = "none"
+
+          // Add to DOM, click, and remove
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
+
+          // Clean up blob URL
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
+        } catch (fetchError) {
+          // Fallback: direct window.open for mobile
+          console.log("Fetch failed, using fallback method")
+          window.location.href = fileUrl
         }
       } else if (file.file_drive_link) {
-        window.open(file.file_drive_link, "_blank", "noopener,noreferrer")
+        window.open(file.file_drive_link, "_blank")
       }
 
       // Update download count in UI
