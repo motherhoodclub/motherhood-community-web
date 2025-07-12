@@ -123,25 +123,6 @@ export default function DownloadableFileDetailsPage() {
   }
 }
 
-    // Update download count in UI
-    setFile((prev) => (prev ? { ...prev, download_count: prev.download_count + 1 } : null))
-
-    toast({
-      title: "تم بنجاح",
-      description: "بدأ تحميل الملف",
-    })
-  } catch (error) {
-    console.error("Error downloading file:", error)
-    toast({
-      title: "خطأ",
-      description: "حدث خطأ أثناء تحميل الملف",
-      variant: "destructive",
-    })
-  } finally {
-    setIsDownloading(false)
-  }
-}
-
   const handleDelete = async () => {
     if (!file || !confirm("هل أنت متأكد من حذف هذا الملف؟")) return
 
