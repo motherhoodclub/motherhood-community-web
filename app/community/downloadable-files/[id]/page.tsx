@@ -105,42 +105,50 @@ export default function DownloadableFileDetailsPage() {
       if (file.file_url) {
         const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`
 
-        // Force download approach that works on mobile
-        const link = document.createElement("a")
-        link.href = fileUrl
-        link.download = file.title || "download"
-        link.target = "_blank"
-        link.rel = "noopener noreferrer"
+        try {
+          // Fetch the file with proper headers
+          const response = await fetch(fileUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/octet-stream",
+            },
+          })
 
-        // Force download by adding download attribute and proper headers
-        link.setAttribute("download", file.title || "download")
+          if (!response.ok) throw new Error("Network response was not ok")
 
-        // Hide the link
-        link.style.display = "none"
-        link.style.opacity = "0"
-        link.style.position = "absolute"
-        link.style.left = "-9999px"
+          // Get the blob
+          const blob = await response.blob()
 
-        // Add to DOM
-        document.body.appendChild(link)
+          // Create object URL
+          const url = window.URL.createObjectURL(blob)
 
-        // Trigger click with user gesture
-        const clickEvent = new MouseEvent("click", {
-          view: window,
-          bubbles: true,
-          cancelable: true,
-        })
+          // Create and trigger download
+          const a = document.createElement("a")
+          a.style.display = "none"
+          a.href = url
+          a.download = file.title || "download"
 
-        link.dispatchEvent(clickEvent)
+          document.body.appendChild(a)
+          a.click()
 
-        // Clean up
-        setTimeout(() => {
-          if (document.body.contains(link)) {
-            document.body.removeChild(link)
-          }
-        }, 100)
+          // Cleanup
+          window.URL.revokeObjectURL(url)
+          document.body.removeChild(a)
+        } catch (fetchError) {
+          console.log("Fetch failed, trying alternative method")
+
+          // Alternative method for mobile - use iframe
+          const iframe = document.createElement("iframe")
+          iframe.style.display = "none"
+          iframe.src = fileUrl + "?download=1"
+          document.body.appendChild(iframe)
+
+          setTimeout(() => {
+            document.body.removeChild(iframe)
+          }, 1000)
+        }
       } else if (file.file_drive_link) {
-        window.open(file.file_drive_link, "_blank", "noopener,noreferrer")
+        window.open(file.file_drive_link, "_blank")
       }
 
       // Update download count in UI
