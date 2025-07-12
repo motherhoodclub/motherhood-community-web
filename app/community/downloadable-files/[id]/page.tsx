@@ -89,86 +89,109 @@ export default function DownloadableFileDetailsPage() {
   }
 
   const handleDownload = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  e.preventDefault()
+  e.stopPropagation()
 
-    if (!file) return
+  if (!file) return
 
-    setIsDownloading(true)
+  setIsDownloading(true)
 
-    try {
-      // Increment download count first
-      await fetch(`/api/downloadable-files/${file.id}/download`, {
-        method: "POST",
-      })
+  try {
+    // Increment download count first
+    await fetch(`/api/downloadable-files/${file.id}/download`, {
+      method: "POST",
+    })
 
-      if (file.file_url) {
-        const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`
-
+    if (file.file_url) {
+      const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`
+      
+      // Detect if we're on a mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      
+      if (isMobile) {
+        // For mobile: Direct navigation with Content-Disposition header
+        // First, check if the file can be downloaded directly
         try {
-          // Fetch the file with proper headers
-          const response = await fetch(fileUrl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/octet-stream",
-            },
+          // Create a temporary link that forces download
+          const link = document.createElement('a')
+          link.href = fileUrl
+          link.target = '_blank'
+          link.rel = 'noopener noreferrer'
+          
+          // Add download attribute (works on some mobile browsers)
+          link.download = file.title || 'download'
+          
+          // For better mobile support, append to body before clicking
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          
+        } catch (mobileError) {
+          console.error('Mobile download error:', mobileError)
+          
+          // Last resort: Open in new tab
+          // This will at least allow users to long-press and save
+          window.open(fileUrl, '_blank')
+          
+          toast({
+            title: "تنبيه",
+            description: "قد تحتاج إلى الضغط المطول على الملف واختيار 'حفظ' أو 'تنزيل'",
           })
-
+        }
+      } else {
+        // Desktop: Use the blob method (your existing code)
+        try {
+          const response = await fetch(fileUrl)
           if (!response.ok) throw new Error("Network response was not ok")
-
-          // Get the blob
+          
           const blob = await response.blob()
-
-          // Create object URL
           const url = window.URL.createObjectURL(blob)
-
-          // Create and trigger download
+          
           const a = document.createElement("a")
           a.style.display = "none"
           a.href = url
           a.download = file.title || "download"
-
+          
           document.body.appendChild(a)
           a.click()
-
-          // Cleanup
+          
           window.URL.revokeObjectURL(url)
           document.body.removeChild(a)
         } catch (fetchError) {
-          console.log("Fetch failed, trying alternative method")
-
-          // Alternative method for mobile - use iframe
-          const iframe = document.createElement("iframe")
-          iframe.style.display = "none"
-          iframe.src = fileUrl + "?download=1"
-          document.body.appendChild(iframe)
-
-          setTimeout(() => {
-            document.body.removeChild(iframe)
-          }, 1000)
+          // Fallback for desktop
+          window.open(fileUrl, '_blank')
         }
-      } else if (file.file_drive_link) {
-        window.open(file.file_drive_link, "_blank")
       }
-
-      // Update download count in UI
-      setFile((prev) => (prev ? { ...prev, download_count: prev.download_count + 1 } : null))
-
-      toast({
-        title: "تم بنجاح",
-        description: "بدأ تحميل الملف",
-      })
-    } catch (error) {
-      console.error("Error downloading file:", error)
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء تحميل الملف",
-        variant: "destructive",
-      })
-    } finally {
-      setIsDownloading(false)
+    } else if (file.file_drive_link) {
+      // For Google Drive links, always open in new tab
+      window.open(file.file_drive_link, "_blank")
+      
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        toast({
+          title: "تنبيه",
+          description: "سيتم فتح الملف في نافذة جديدة. استخدم خيارات المتصفح للتنزيل.",
+        })
+      }
     }
+
+    // Update download count in UI
+    setFile((prev) => (prev ? { ...prev, download_count: prev.download_count + 1 } : null))
+
+    toast({
+      title: "تم بنجاح",
+      description: "بدأ تحميل الملف",
+    })
+  } catch (error) {
+    console.error("Error downloading file:", error)
+    toast({
+      title: "خطأ",
+      description: "حدث خطأ أثناء تحميل الملف",
+      variant: "destructive",
+    })
+  } finally {
+    setIsDownloading(false)
   }
+}
 
   const handleDelete = async () => {
     if (!file || !confirm("هل أنت متأكد من حذف هذا الملف؟")) return
