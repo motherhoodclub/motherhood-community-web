@@ -105,32 +105,42 @@ export default function DownloadableFileDetailsPage() {
       if (file.file_url) {
         const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`
 
-        // Mobile-first approach: fetch the file and create blob URL
-        try {
-          const response = await fetch(fileUrl)
-          const blob = await response.blob()
-          const blobUrl = window.URL.createObjectURL(blob)
+        // Force download approach that works on mobile
+        const link = document.createElement("a")
+        link.href = fileUrl
+        link.download = file.title || "download"
+        link.target = "_blank"
+        link.rel = "noopener noreferrer"
 
-          // Create download link
-          const link = document.createElement("a")
-          link.href = blobUrl
-          link.download = file.title || "download"
-          link.style.display = "none"
+        // Force download by adding download attribute and proper headers
+        link.setAttribute("download", file.title || "download")
 
-          // Add to DOM, click, and remove
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
+        // Hide the link
+        link.style.display = "none"
+        link.style.opacity = "0"
+        link.style.position = "absolute"
+        link.style.left = "-9999px"
 
-          // Clean up blob URL
-          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
-        } catch (fetchError) {
-          // Fallback: direct window.open for mobile
-          console.log("Fetch failed, using fallback method")
-          window.location.href = fileUrl
-        }
+        // Add to DOM
+        document.body.appendChild(link)
+
+        // Trigger click with user gesture
+        const clickEvent = new MouseEvent("click", {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+        })
+
+        link.dispatchEvent(clickEvent)
+
+        // Clean up
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link)
+          }
+        }, 100)
       } else if (file.file_drive_link) {
-        window.open(file.file_drive_link, "_blank")
+        window.open(file.file_drive_link, "_blank", "noopener,noreferrer")
       }
 
       // Update download count in UI
