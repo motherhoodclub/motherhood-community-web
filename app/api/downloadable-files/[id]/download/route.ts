@@ -67,15 +67,23 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       else if (contentType.includes('png')) extension = '.png'
       else if (contentType.includes('text')) extension = '.txt'
       
-      // Create filename
+      // Create filename - handle Arabic/Unicode characters
       const baseFileName = file.title || 'download'
       const fileName = baseFileName.includes('.') ? baseFileName : `${baseFileName}${extension}`
+      
+      // Encode filename for Unicode support
+      const encodedFileName = encodeURIComponent(fileName)
+        .replace(/['()]/g, escape)
+        .replace(/\*/g, '%2A')
+      
+      // Use RFC 5987 encoding for Unicode filenames
+      const contentDisposition = `attachment; filename="${fileName.replace(/[^\x00-\x7F]/g, '_')}"; filename*=UTF-8''${encodedFileName}`
 
       // Return file with download headers
       return new NextResponse(blob, {
         headers: {
           'Content-Type': 'application/octet-stream', // Force download
-          'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Content-Disposition': contentDisposition,
           'Content-Length': blob.size.toString(),
           'Cache-Control': 'no-cache, no-store, must-revalidate',
         },
