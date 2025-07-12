@@ -102,18 +102,29 @@ export default function DownloadableFileDetailsPage() {
         method: "POST",
       })
 
-      // Download the file
+      // Download the file - mobile-friendly approach
       if (file.file_url) {
         const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${file.file_url}`
-        const link = document.createElement("a")
-        link.href = fileUrl
-        link.download = file.title
-        link.target = "_blank"
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+
+        // For mobile compatibility, use window.open with proper attributes
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+        if (isMobile) {
+          // On mobile, open in new tab/window which triggers download
+          window.open(fileUrl, "_blank", "noopener,noreferrer")
+        } else {
+          // Desktop approach with programmatic download
+          const link = document.createElement("a")
+          link.href = fileUrl
+          link.download = file.title
+          link.target = "_blank"
+          link.rel = "noopener noreferrer"
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
       } else if (file.file_drive_link) {
-        window.open(file.file_drive_link, "_blank")
+        window.open(file.file_drive_link, "_blank", "noopener,noreferrer")
       }
 
       // Update download count in UI
