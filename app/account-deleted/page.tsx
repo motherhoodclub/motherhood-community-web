@@ -9,7 +9,7 @@ import { AlertTriangle, Trash2, Shield, Clock, FileText, MessageSquare, CreditCa
 export default function AccountDeletionInfoPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-white p-4" dir="rtl">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8" dir="rtl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -32,7 +32,7 @@ export default function AccountDeletionInfoPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-red-200 bg-red-50" dir="rtl">
             <CardHeader>
               <CardTitle className="text-red-800 flex items-center justify-end">
                 <Trash2 className="w-6 h-6 ml-2" />
@@ -58,7 +58,7 @@ export default function AccountDeletionInfoPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <Card>
+          <Card dir="rtl">
             <CardHeader>
               <CardTitle className="flex items-center justify-end">
                 <FileText className="w-6 h-6 ml-2" />
@@ -67,7 +67,7 @@ export default function AccountDeletionInfoPage() {
               <CardDescription>جميع البيانات التالية ستحذف نهائياً من حسابك:</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-6" dir="rtl">
                 <div className="space-y-4">
                   <div className="flex items-center justify-end p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-700">معلومات الحساب الشخصية</span>
@@ -124,7 +124,7 @@ export default function AccountDeletionInfoPage() {
               <CardDescription>اتبع هذه الخطوات لحذف حسابك نهائياً:</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4" dir="rtl">
                 <div className="flex items-start justify-end p-4 bg-blue-50 rounded-lg">
                   <div className="text-right">
                     <h3 className="font-semibold text-blue-900 mb-1">الخطوة 1: انتقل إلى الإعدادات</h3>
@@ -165,6 +165,7 @@ export default function AccountDeletionInfoPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
+          dir="rtl"
         >
           <Button asChild size="lg" className="bg-red-600 hover:bg-red-700">
             <Link href="/community/settings">

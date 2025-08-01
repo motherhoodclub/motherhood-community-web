@@ -37,7 +37,7 @@ export async function DELETE() {
     await supabase.from("user_profiles").delete().eq("id", userId)
 
     // Finally, delete the auth user
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId)
+    const { error: deleteError } = await supabase.auth.deleteUser()
 
     if (deleteError) {
       console.error("Error deleting user from auth:", deleteError)
