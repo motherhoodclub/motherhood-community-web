@@ -9,7 +9,7 @@ import { CheckCircle, Home, UserX } from "lucide-react"
 
 export default function AccountDeletedPage() {
   useEffect(() => {
-    // Clear any local storage or session data
+    // Clear any local storage or session data 
     localStorage.clear()
     sessionStorage.clear()
   }, [])
