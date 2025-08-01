@@ -24,6 +24,8 @@ export default function SettingsPage() {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("")
 
   useEffect(() => {
     fetchSettings()
@@ -126,6 +128,60 @@ export default function SettingsPage() {
     setIsLoading(false)
   }
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmationText !== "حذف حسابي نهائياً") {
+      toast({
+        title: "خطأ",
+        description: "يرجى كتابة النص المطلوب بالضبط",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      router.push("/auth/login")
+      return
+    }
+
+    try {
+      // Call API to delete user account and all data
+      const response = await fetch("/api/delete-account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete account")
+      }
+
+      // Sign out the user
+      await supabase.auth.signOut()
+
+      toast({
+        title: "تم حذف الحساب",
+        description: "تم حذف حسابك وجميع بياناتك بنجاح",
+      })
+
+      router.push("/account-deleted")
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "فشل في حذف الحساب. يرجى المحاولة مرة أخرى",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   if (isLoading) {
     return <div>جاري التحميل...</div>
   }
@@ -189,6 +245,54 @@ export default function SettingsPage() {
         </Card>
         <div className="mt-8">
           <NotificationSettings />
+        </div>
+        <div className="mt-8">
+          <Card className="max-w-2xl mx-auto border-red-200">
+            <CardHeader>
+              <CardTitle className="text-2xl text-red-600">حذف الحساب</CardTitle>
+              <CardDescription className="text-red-500">
+                تحذير: هذا الإجراء لا يمكن التراجع عنه. سيتم حذف حسابك وجميع بياناتك نهائياً.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!showDeleteConfirmation ? (
+                <Button variant="destructive" onClick={() => setShowDeleteConfirmation(true)} className="w-full">
+                  حذف الحساب نهائياً
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">لتأكيد حذف حسابك، يرجى كتابة النص التالي بالضبط:</p>
+                  <p className="font-bold text-red-600">حذف حسابي نهائياً</p>
+                  <Input
+                    value={deleteConfirmationText}
+                    onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                    placeholder="اكتب النص هنا..."
+                    className="text-right"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAccount}
+                      disabled={isLoading || deleteConfirmationText !== "حذف حسابي نهائياً"}
+                      className="flex-1"
+                    >
+                      {isLoading ? "جاري الحذف..." : "تأكيد الحذف"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDeleteConfirmation(false)
+                        setDeleteConfirmationText("")
+                      }}
+                      className="flex-1"
+                    >
+                      إلغاء
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </ProtectedRoute>
