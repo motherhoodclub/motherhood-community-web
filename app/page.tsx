@@ -61,7 +61,7 @@ const Particles = () => {
   )
 }
 
-// Floating Bubble Component 
+// Floating Bubble Component
 const FloatingBubble = ({ children, delay = 0, position = {} }) => (
   <motion.div
     className="absolute"

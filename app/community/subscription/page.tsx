@@ -40,6 +40,7 @@ export default function SubscriptionPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
   const { subscription, isSubscribed, isAdmin, checkSubscription } = useSubscription()
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
 
   // Check for success or canceled parameters in the URL
   useEffect(() => {
@@ -662,8 +663,10 @@ export default function SubscriptionPage() {
                     </DialogTrigger>
                     <Button
                       variant="destructive"
+                      disabled={isDeletingAccount}
                       onClick={async () => {
                         try {
+                          setIsDeletingAccount(true)
                           const response = await fetch("/api/delete-account", {
                             method: "DELETE",
                           })
@@ -673,19 +676,25 @@ export default function SubscriptionPage() {
                               title: "تم حذف الحساب",
                               description: "تم حذف حسابك بنجاح",
                             })
+                            await supabase.auth.signOut()
                             router.push("/account-deleted")
                           } else {
-                            throw new Error("Failed to delete account")
+                            const error = await response.json()
+                            throw new Error(error.message || "Failed to delete account")
                           }
                         } catch (error) {
+                          console.error("Error deleting account:", error)
                           toast({
                             title: "خطأ",
-                            description: "حدث خطأ أثناء حذف الحساب",
+                            description: error.message || "حدث خطأ أثناء حذف الحساب",
                             variant: "destructive",
                           })
+                        } finally {
+                          setIsDeletingAccount(false)
                         }
                       }}
                     >
+                      {isDeletingAccount && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                       تأكيد الحذف النهائي
                     </Button>
                   </DialogFooter>
