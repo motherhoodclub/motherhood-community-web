@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 
 export async function DELETE() {
   try {
@@ -36,8 +37,11 @@ export async function DELETE() {
     // Delete user profile
     await supabase.from("user_profiles").delete().eq("id", userId)
 
-    // Finally, delete the auth user
-    const { error: deleteError } = await supabase.auth.deleteUser()
+    // Create admin client with service role key
+    const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+    // Finally, delete the auth user using admin client
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
       console.error("Error deleting user from auth:", deleteError)

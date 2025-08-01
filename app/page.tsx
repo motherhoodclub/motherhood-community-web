@@ -27,7 +27,7 @@ import { PricingSection } from "@/components/pricing-section"
 
 const MotionLink = motion(Link)
 
-// Particle Animation Component 
+// Particle Animation Component
 const Particles = () => {
   const particleCount = 20
   const colors = ["rgba(8, 42, 69, 0.2)", "rgba(199, 216, 51, 0.2)"]
