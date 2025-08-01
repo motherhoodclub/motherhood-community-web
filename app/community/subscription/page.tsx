@@ -499,7 +499,7 @@ export default function SubscriptionPage() {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
                   >
                     إلغاء الاشتراك
                   </Button>
@@ -628,6 +628,72 @@ export default function SubscriptionPage() {
             </div>
           </>
         )}
+        {/* Delete Account Section */}
+        <div className="mt-16 max-w-2xl mx-auto">
+          <Card className="border-red-200 bg-red-50/50">
+            <CardHeader>
+              <CardTitle className="text-red-700 flex items-center">
+                <AlertCircle className="ml-2 h-5 w-5" />
+                حذف الحساب نهائياً
+              </CardTitle>
+              <CardDescription className="text-red-600">حذف حسابك وجميع بياناتك بشكل نهائي من المنصة</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                تحذير: هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع بياناتك نهائياً من المنصة.
+              </p>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="w-full">
+                    حذف الحساب نهائياً
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="text-red-700">تأكيد حذف الحساب</DialogTitle>
+                    <DialogDescription>
+                      هل أنت متأكد من رغبتك في حذف حسابك نهائياً؟ سيتم حذف جميع بياناتك ولن تتمكن من استرداد حسابك مرة
+                      أخرى.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <DialogTrigger asChild>
+                      <Button variant="outline">تراجع</Button>
+                    </DialogTrigger>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch("/api/delete-account", {
+                            method: "DELETE",
+                          })
+
+                          if (response.ok) {
+                            toast({
+                              title: "تم حذف الحساب",
+                              description: "تم حذف حسابك بنجاح",
+                            })
+                            router.push("/account-deleted")
+                          } else {
+                            throw new Error("Failed to delete account")
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "خطأ",
+                            description: "حدث خطأ أثناء حذف الحساب",
+                            variant: "destructive",
+                          })
+                        }
+                      }}
+                    >
+                      تأكيد الحذف النهائي
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
