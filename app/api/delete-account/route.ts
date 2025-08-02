@@ -19,29 +19,33 @@ export async function DELETE() {
 
     const userId = user.id
 
-    // Delete user data from all tables in the correct order (respecting foreign key constraints)
-
-    // Delete from tables that reference user_profiles
-    await supabase.from("comments").delete().eq("user_id", userId)
-    await supabase.from("topics").delete().eq("user_id", userId)
-    await supabase.from("questions").delete().eq("user_id", userId)
-    await supabase.from("question_replies").delete().eq("user_id", userId)
-    await supabase.from("workshop_registrations").delete().eq("user_id", userId)
-    await supabase.from("user_subscriptions").delete().eq("user_id", userId)
-    await supabase.from("user_payments").delete().eq("user_id", userId)
-    await supabase.from("user_settings").delete().eq("user_id", userId)
-    await supabase.from("notification_settings").delete().eq("user_id", userId)
-    await supabase.from("chat_messages").delete().eq("user_id", userId)
-    await supabase.from("downloadable_files").delete().eq("created_by", userId)
-
-    // Delete user profile
-    await supabase.from("user_profiles").delete().eq("id", userId)
-
     // Create admin client with service role key
     const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-    // Finally, delete the auth user using admin client
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    // Delete user data from all tables in the correct order using admin client
+    try {
+      // Delete from tables that reference user_profiles
+      await supabaseAdmin.from("comments").delete().eq("user_id", userId)
+      await supabaseAdmin.from("topics").delete().eq("user_id", userId)
+      await supabaseAdmin.from("questions").delete().eq("user_id", userId)
+      await supabaseAdmin.from("question_replies").delete().eq("user_id", userId)
+      await supabaseAdmin.from("workshop_registrations").delete().eq("user_id", userId)
+      await supabaseAdmin.from("user_subscriptions").delete().eq("user_id", userId)
+      await supabaseAdmin.from("user_payments").delete().eq("user_id", userId)
+      await supabaseAdmin.from("user_settings").delete().eq("user_id", userId)
+      await supabaseAdmin.from("notification_settings").delete().eq("user_id", userId)
+      await supabaseAdmin.from("chat_messages").delete().eq("user_id", userId)
+      await supabaseAdmin.from("downloadable_files").delete().eq("created_by", userId)
+
+      // Delete user profile
+      await supabaseAdmin.from("user_profiles").delete().eq("id", userId)
+    } catch (dataError) {
+      console.error("Error deleting user data:", dataError)
+      // Continue with auth deletion even if some data deletion fails
+    }
+
+    // Finally, delete the auth user using admin client with soft delete
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId, true)
 
     if (deleteError) {
       console.error("Error deleting user from auth:", deleteError)
