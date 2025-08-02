@@ -39,7 +39,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card className="border-red-200 bg-red-50" dir="rtl">
             <CardHeader>
-              <CardTitle className="text-red-800 flex items-center justify-end">
+              <CardTitle className="text-red-800 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 ml-2" />
                 تحذير مهم جداً
               </CardTitle>
@@ -65,7 +65,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card dir="rtl">
             <CardHeader>
-              <CardTitle className="flex items-center justify-end">
+              <CardTitle className="flex items-center justify-center">
                 <CreditCard className="w-6 h-6 ml-2" />
                 تحقق من حالة الاشتراك أولاً
               </CardTitle>
@@ -148,7 +148,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card dir="rtl">
             <CardHeader>
-              <CardTitle className="flex items-center justify-end">
+              <CardTitle className="flex items-center justify-center">
                 <FileText className="w-6 h-6 ml-2" />
                 ما الذي سيتم حذفه من حسابك؟
               </CardTitle>
@@ -205,7 +205,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card dir="rtl">
             <CardHeader>
-              <CardTitle className="flex items-center justify-end">
+              <CardTitle className="flex items-center justify-center">
                 <Trash2 className="w-6 h-6 ml-2" />
                 خطوات حذف حسابك من مجتمع الأمومة
               </CardTitle>
@@ -303,7 +303,7 @@ export default function AccountDeletionInfoPage() {
             فريق مجتمع الأمومة هنا لمساعدتك في حل أي مشكلة قد تواجهها على الموقع أو التطبيق.
           </p>
           <Button variant="outline" asChild className="border-blue-400 text-blue-700 hover:bg-blue-50">
-            <Link href="#contact">تواصل معنا للمساعدة</Link>
+            <Link href="mailto:info@motherhoodclub.net">تواصل معنا للمساعدة</Link>
           </Button>
         </motion.div>
       </div>
@@ -313,13 +313,13 @@ export default function AccountDeletionInfoPage() {
         <div className="container mx-auto px-4 text-center" dir="rtl">
           <p className="text-lg mb-4">جميع الحقوق محفوظة لمجتمع الأمومة © {new Date().getFullYear()}</p>
           <div className="flex justify-center space-x-4 rtl:space-x-reverse">
-            <Link href="#" className="hover:text-secondary transition-colors duration-300">
+            <Link href="https://motherhoodclub.net/%d8%b4%d8%b1%d9%88%d8%b7-%d8%a7%d9%84%d8%a7%d8%b3%d8%aa%d8%ae%d8%af%d8%a7%d9%85/" className="hover:text-secondary transition-colors duration-300">
               شروط الاستخدام
             </Link>
-            <Link href="#" className="hover:text-secondary transition-colors duration-300">
+            <Link href="https://motherhoodclub.net/%d8%b3%d9%8a%d8%a7%d8%b3%d8%a9-%d8%a7%d9%84%d8%ae%d8%b5%d9%88%d8%b5%d9%8a%d8%a9/" className="hover:text-secondary transition-colors duration-300">
               سياسة الخصوصية
             </Link>
-            <Link href="#" className="hover:text-secondary transition-colors duration-300">
+            <Link href="mailto:info@motherhoodclub.net" className="hover:text-secondary transition-colors duration-300">
               اتصل بنا
             </Link>
           </div>
