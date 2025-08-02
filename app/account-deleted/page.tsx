@@ -39,7 +39,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card className="border-red-200 bg-red-50" dir="rtl">
             <CardHeader>
-              <CardTitle className="text-red-800 flex items-center justify-end">
+              <CardTitle className="text-red-800 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 ml-2" />
                 تحذير مهم جداً
               </CardTitle>
@@ -65,7 +65,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card dir="rtl">
             <CardHeader>
-              <CardTitle className="flex items-center justify-end">
+              <CardTitle className="flex items-center justify-center">
                 <CreditCard className="w-6 h-6 ml-2" />
                 تحقق من حالة الاشتراك أولاً
               </CardTitle>
@@ -148,7 +148,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card dir="rtl">
             <CardHeader>
-              <CardTitle className="flex items-center justify-end">
+              <CardTitle className="flex items-center justify-center">
                 <FileText className="w-6 h-6 ml-2" />
                 ما الذي سيتم حذفه من حسابك؟
               </CardTitle>
@@ -205,7 +205,7 @@ export default function AccountDeletionInfoPage() {
         >
           <Card dir="rtl">
             <CardHeader>
-              <CardTitle className="flex items-center justify-end">
+              <CardTitle className="flex items-center justify-center">
                 <Trash2 className="w-6 h-6 ml-2" />
                 خطوات حذف حسابك من مجتمع الأمومة
               </CardTitle>
@@ -303,7 +303,7 @@ export default function AccountDeletionInfoPage() {
             فريق مجتمع الأمومة هنا لمساعدتك في حل أي مشكلة قد تواجهها على الموقع أو التطبيق.
           </p>
           <Button variant="outline" asChild className="border-blue-400 text-blue-700 hover:bg-blue-50">
-            <Link href="#contact">تواصل معنا للمساعدة</Link>
+            <Link href="mailto:info@motherhoodclub.net">تواصل معنا للمساعدة</Link>
           </Button>
         </motion.div>
       </div>
