@@ -27,7 +27,7 @@ export default function AccountDeletionInfoPage() {
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">حذف الحساب نهائياً</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            تعرفي على كيفية حذف حسابك وجميع بياناتك من مجتمع الأمومة بشكل نهائي وآمن على الموقع الإلكتروني وتطبيق الهاتف المحمول
+            تعرف على كيفية حذف حسابك وجميع بياناتك من مجتمع الأمومة بشكل نهائي وآمن على الموقع الإلكتروني وتطبيق الهاتف المحمول
           </p>
         </motion.div>
 
@@ -50,7 +50,7 @@ export default function AccountDeletionInfoPage() {
                   حذف الحساب عملية نهائية ولا يمكن التراجع عنها!
                 </p>
                 <p className="text-red-700 text-lg leading-relaxed">
-                  بمجرد حذف حسابك من مجتمع الأمومة، ستفقدين جميع بياناتك ومحتواك وذكرياتك بشكل نهائي ولن تتمكني من استردادها مرة أخرى على الموقع الإلكتروني أو تطبيق الهاتف المحمول.
+                  بمجرد حذف حسابك من مجتمع الأمومة، ستفقد جميع بياناتك ومحتواك وذكرياتك بشكل نهائي ولن تتمكن من استردادها مرة أخرى على الموقع الإلكتروني أو تطبيق الهاتف المحمول.
                 </p>
               </div>
             </CardContent>
@@ -71,10 +71,10 @@ export default function AccountDeletionInfoPage() {
               </CardTitle>
               <CardDescription>يجب التأكد من حالة اشتراكك قبل حذف الحساب</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent dir="rtl">
               <div className="grid md:grid-cols-2 gap-6" dir="rtl">
                 {/* No Subscription Scenario */}
-                <div className="bg-green-50 p-6 rounded-xl border border-green-200">
+                <div className="bg-green-50 p-6 rounded-xl border border-green-200" dir="rtl">
                   <div className="flex items-center justify-end mb-4">
                     <h3 className="text-green-800 font-bold text-lg">إذا لم يكن لديك اشتراك نشط</h3>
                     <CheckCircle className="w-6 h-6 text-green-600 ml-2" />
@@ -102,7 +102,7 @@ export default function AccountDeletionInfoPage() {
                 </div>
 
                 {/* Active Subscription Scenario */}
-                <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
+                <div className="bg-orange-50 p-6 rounded-xl border border-orange-200" dir="rtl">
                   <div className="flex items-center justify-end mb-4">
                     <h3 className="text-orange-800 font-bold text-lg">إذا كان لديك اشتراك نشط</h3>
                     <AlertTriangle className="w-6 h-6 text-orange-600 ml-2" />
@@ -119,7 +119,7 @@ export default function AccountDeletionInfoPage() {
                   </div>
                   
                   <p className="text-orange-700 mb-4">
-                    يجب إلغاء اشتراكك أولاً قبل أن تتمكني من حذف حسابك نهائياً.
+                    يجب إلغاء اشتراكك أولاً قبل أن تتمكن من حذف حسابك نهائياً.
                   </p>
                   
                   <div className="space-y-2">
@@ -154,7 +154,7 @@ export default function AccountDeletionInfoPage() {
               </CardTitle>
               <CardDescription>جميع البيانات التالية ستحذف نهائياً من حسابك في مجتمع الأمومة:</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent dir="rtl">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" dir="rtl">
                 <div className="flex items-center justify-end p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
                   <span className="text-blue-800 font-medium">معلومات الحساب الشخصية</span>
@@ -203,20 +203,20 @@ export default function AccountDeletionInfoPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <Card>
+          <Card dir="rtl">
             <CardHeader>
               <CardTitle className="flex items-center justify-end">
                 <Trash2 className="w-6 h-6 ml-2" />
                 خطوات حذف حسابك من مجتمع الأمومة
               </CardTitle>
-              <CardDescription>اتبعي هذه الخطوات لحذف حسابك نهائياً من الموقع الإلكتروني أو تطبيق الهاتف:</CardDescription>
+              <CardDescription>اتبع هذه الخطوات لحذف حسابك نهائياً من الموقع الإلكتروني أو تطبيق الهاتف:</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent dir="rtl">
               <div className="space-y-6" dir="rtl">
-                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200" dir="rtl">
                   <div className="text-right flex-1">
-                    <h3 className="font-bold text-blue-900 mb-2 text-lg">الخطوة 1: تحققي من حالة الاشتراك</h3>
-                    <p className="text-blue-800">انتقلي إلى صفحة الاشتراكات للتأكد من عدم وجود اشتراك نشط</p>
+                    <h3 className="font-bold text-blue-900 mb-2 text-lg">الخطوة 1: تحقق من حالة الاشتراك</h3>
+                    <p className="text-blue-800">انتقل إلى صفحة الاشتراكات للتأكد من عدم وجود اشتراك نشط</p>
                     <p className="text-blue-700 text-sm mt-1">إذا كان لديك اشتراك نشط، يجب إلغاؤه أولاً</p>
                   </div>
                   <div className="bg-blue-600 rounded-full p-3 ml-4 flex-shrink-0">
@@ -224,10 +224,10 @@ export default function AccountDeletionInfoPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200" dir="rtl">
                   <div className="text-right flex-1">
-                    <h3 className="font-bold text-orange-900 mb-2 text-lg">الخطوة 2: انتقلي إلى الإعدادات</h3>
-                    <p className="text-orange-800">اذهبي إلى صفحة إعدادات حسابك من القائمة الجانبية</p>
+                    <h3 className="font-bold text-orange-900 mb-2 text-lg">الخطوة 2: انتقل إلى الإعدادات</h3>
+                    <p className="text-orange-800">اذهب إلى صفحة إعدادات حسابك من القائمة الجانبية</p>
                     <p className="text-orange-700 text-sm mt-1">يمكنك الوصول إليها من الموقع أو التطبيق</p>
                   </div>
                   <div className="bg-orange-600 rounded-full p-3 ml-4 flex-shrink-0">
@@ -235,10 +235,10 @@ export default function AccountDeletionInfoPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border border-red-200">
+                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border border-red-200" dir="rtl">
                   <div className="text-right flex-1">
-                    <h3 className="font-bold text-red-900 mb-2 text-lg">الخطوة 3: ابحثي عن زر حذف الحساب</h3>
-                    <p className="text-red-800">ستجدين زر "حذف الحساب نهائياً" في أسفل صفحة الإعدادات</p>
+                    <h3 className="font-bold text-red-900 mb-2 text-lg">الخطوة 3: ابحث عن زر حذف الحساب</h3>
+                    <p className="text-red-800">ستجد زر "حذف الحساب نهائياً" في أسفل صفحة الإعدادات</p>
                     <p className="text-red-700 text-sm mt-1">هذا الزر متوفر فقط إذا لم يكن لديك اشتراك نشط</p>
                   </div>
                   <div className="bg-red-600 rounded-full p-3 ml-4 flex-shrink-0">
@@ -246,10 +246,10 @@ export default function AccountDeletionInfoPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                <div className="flex items-start justify-end p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200" dir="rtl">
                   <div className="text-right flex-1">
                     <h3 className="font-bold text-purple-900 mb-2 text-lg">الخطوة 4: تأكيد الحذف النهائي</h3>
-                    <p className="text-purple-800">اكتبي كلمة "حذف" في المربع المطلوب واضغطي على تأكيد الحذف</p>
+                    <p className="text-purple-800">اكتب كلمة "حذف" في المربع المطلوب واضغط على تأكيد الحذف</p>
                     <p className="text-purple-700 text-sm mt-1">هذه العملية نهائية ولا يمكن التراجع عنها</p>
                   </div>
                   <div className="bg-purple-600 rounded-full p-3 ml-4 flex-shrink-0">
@@ -294,22 +294,23 @@ export default function AccountDeletionInfoPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.5 }}
           className="text-center bg-gradient-to-r from-blue-50 to-purple-50 p-8 rounded-xl border border-blue-200"
+          dir="rtl"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4">هل تحتاجين مساعدة؟</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">هل تحتاج مساعدة؟</h3>
           <p className="text-gray-600 text-lg leading-relaxed mb-4">
-            إذا كنت تواجهين مشاكل تقنية أو تحتاجين مساعدة، يمكنك التواصل معنا قبل حذف حسابك.
+            إذا كنت تواجه مشاكل تقنية أو تحتاج مساعدة، يمكنك التواصل معنا قبل حذف حسابك.
             <br />
-            فريق مجتمع الأمومة هنا لمساعدتك في حل أي مشكلة قد تواجهينها على الموقع أو التطبيق.
+            فريق مجتمع الأمومة هنا لمساعدتك في حل أي مشكلة قد تواجهها على الموقع أو التطبيق.
           </p>
           <Button variant="outline" asChild className="border-blue-400 text-blue-700 hover:bg-blue-50">
-            <Link href="#contact">تواصلي معنا للمساعدة</Link>
+            <Link href="#contact">تواصل معنا للمساعدة</Link>
           </Button>
         </motion.div>
       </div>
 
       {/* Footer */}
-      <footer id="contact" className="bg-primary text-white py-12 mt-16">
-        <div className="container mx-auto px-4 text-center">
+      <footer id="contact" className="bg-primary text-white py-12 mt-16" dir="rtl">
+        <div className="container mx-auto px-4 text-center" dir="rtl">
           <p className="text-lg mb-4">جميع الحقوق محفوظة لمجتمع الأمومة © {new Date().getFullYear()}</p>
           <div className="flex justify-center space-x-4 rtl:space-x-reverse">
             <Link href="#" className="hover:text-secondary transition-colors duration-300">
