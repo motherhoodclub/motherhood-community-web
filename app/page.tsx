@@ -855,18 +855,18 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer id="contact" className="bg-primary text-white py-12">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-lg mb-4">جميع الحقوق محفوظة لمجتمع الدعم التربوي © {new Date().getFullYear()}</p>
+       {/* Footer */}
+      <footer id="contact" className="bg-primary text-white py-12 mt-16" dir="rtl">
+        <div className="container mx-auto px-4 text-center" dir="rtl">
+          <p className="text-lg mb-4">جميع الحقوق محفوظة لمجتمع الأمومة © {new Date().getFullYear()}</p>
           <div className="flex justify-center space-x-4 rtl:space-x-reverse">
-            <Link href="#" className="hover:text-secondary transition-colors duration-300">
+            <Link href="https://motherhoodclub.net/%d8%b4%d8%b1%d9%88%d8%b7-%d8%a7%d9%84%d8%a7%d8%b3%d8%aa%d8%ae%d8%af%d8%a7%d9%85/" className="hover:text-secondary transition-colors duration-300">
               شروط الاستخدام
             </Link>
-            <Link href="#" className="hover:text-secondary transition-colors duration-300">
+            <Link href="https://motherhoodclub.net/%d8%b3%d9%8a%d8%a7%d8%b3%d8%a9-%d8%a7%d9%84%d8%ae%d8%b5%d9%88%d8%b5%d9%8a%d8%a9/" className="hover:text-secondary transition-colors duration-300">
               سياسة الخصوصية
             </Link>
-            <Link href="#" className="hover:text-secondary transition-colors duration-300">
+            <Link href="mailto:info@motherhoodclub.net" className="hover:text-secondary transition-colors duration-300">
               اتصل بنا
             </Link>
           </div>
