@@ -1,44 +1,24 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
 import { ArrowRight, Shield, Eye, Lock, Database, Smartphone, Trash2 } from "lucide-react"
+import { HeaderHome } from "@/components/header-home"
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50" dir="rtl">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">م</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">مجتمع الدعم التربوي</h1>
-                <p className="text-sm text-gray-600">منصة متكاملة لدعم الأمهات</p>
-              </div>
-            </div>
-            <nav className="hidden md:flex items-center space-x-8 space-x-reverse">
-              <Link href="/" className="text-gray-700 hover:text-pink-600 transition-colors">
-                الرئيسية
-              </Link>
-              <Link href="/community" className="text-gray-700 hover:text-pink-600 transition-colors">
-                المجتمع
-              </Link>
-              <Link href="/terms" className="text-gray-700 hover:text-pink-600 transition-colors">
-                شروط الاستخدام
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div
+      className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 font-alexandria overflow-hidden"
+      dir="rtl"
+    >
+      {/* Header - Same as home page */}
+      <div className="sticky top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-md">
+        <HeaderHome />
+      </div>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">سياسة الخصوصية</h1>
+          <h1 className="text-4xl font-bold text-primary mb-4">سياسة الخصوصية</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             كيف نجمع ونستخدم ونحمي بياناتك الشخصية في منصة مجتمع الدعم التربوي
           </p>
@@ -49,7 +29,7 @@ export default function PrivacyPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
-                <Shield className="h-6 w-6 text-blue-600" />
+                <Shield className="h-6 w-6 text-primary" />
                 التزامنا بخصوصيتك
               </CardTitle>
             </CardHeader>
@@ -66,7 +46,7 @@ export default function PrivacyPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
-                <Database className="h-6 w-6 text-blue-600" />
+                <Database className="h-6 w-6 text-primary" />
                 البيانات التي نجمعها
               </CardTitle>
             </CardHeader>
@@ -105,7 +85,7 @@ export default function PrivacyPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
-                <Eye className="h-6 w-6 text-blue-600" />
+                <Eye className="h-6 w-6 text-primary" />
                 كيف نستخدم بياناتك
               </CardTitle>
             </CardHeader>
@@ -126,7 +106,7 @@ export default function PrivacyPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
-                <Smartphone className="h-6 w-6 text-blue-600" />
+                <Smartphone className="h-6 w-6 text-primary" />
                 خصوصية التطبيقات المحمولة
               </CardTitle>
             </CardHeader>
@@ -156,7 +136,7 @@ export default function PrivacyPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
-                <Lock className="h-6 w-6 text-blue-600" />
+                <Lock className="h-6 w-6 text-primary" />
                 حماية البيانات
               </CardTitle>
             </CardHeader>
@@ -186,7 +166,7 @@ export default function PrivacyPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
-                <Trash2 className="h-6 w-6 text-blue-600" />
+                <Trash2 className="h-6 w-6 text-primary" />
                 حقوقك في البيانات
               </CardTitle>
             </CardHeader>
@@ -326,7 +306,7 @@ export default function PrivacyPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
-          <Button asChild className="bg-blue-600 hover:bg-blue-700">
+          <Button asChild className="bg-primary hover:bg-primary/90">
             <Link href="/community" className="flex items-center gap-2">
               انضم للمجتمع
               <ArrowRight className="h-4 w-4" />
@@ -338,71 +318,26 @@ export default function PrivacyPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center space-x-3 space-x-reverse mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">م</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">مجتمع الدعم التربوي</h3>
-                  <p className="text-gray-400">منصة متكاملة لدعم الأمهات</p>
-                </div>
-              </div>
-              <p className="text-gray-400 max-w-md">نحن هنا لدعمك في رحلة الأمومة بمجتمع آمن ومحتوى تعليمي متخصص.</p>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">روابط مهمة</h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                    الرئيسية
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/community" className="text-gray-400 hover:text-white transition-colors">
-                    المجتمع
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                    شروط الاستخدام
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                    سياسة الخصوصية
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-4">تواصل معنا</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>support@motherhoodclub.net</li>
-                <li>privacy@motherhoodclub.net</li>
-                <li>community.motherhoodclub.net</li>
-              </ul>
-            </div>
-          </div>
-
-          <Separator className="my-8 bg-gray-800" />
-
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">© 2025 مجتمع الدعم التربوي. جميع الحقوق محفوظة.</p>
-            <div className="flex space-x-4 space-x-reverse mt-4 sm:mt-0">
-              <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
-                الشروط
-              </Link>
-              <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
-                الخصوصية
-              </Link>
-            </div>
+      {/* Footer - Same as home page */}
+      <footer id="contact" className="bg-primary text-white py-12 mt-16" dir="rtl">
+        <div className="container mx-auto px-4 text-center" dir="rtl">
+          <p className="text-lg mb-4">جميع الحقوق محفوظة لمجتمع الأمومة © {new Date().getFullYear()}</p>
+          <div className="flex justify-center space-x-4 rtl:space-x-reverse">
+            <Link
+              href="https://motherhoodclub.net/%d8%b4%d8%b1%d9%88%d8%b7-%d8%a7%d9%84%d8%a7%d8%b3%d8%aa%d8%ae%d8%af%d8%a7%d9%85/"
+              className="hover:text-secondary transition-colors duration-300"
+            >
+              شروط الاستخدام
+            </Link>
+            <Link
+              href="https://motherhoodclub.net/%d8%b3%d9%8a%d8%a7%d8%b3%d8%a9-%d8%a7%d9%84%d8%ae%d8%b5%d9%88%d8%b5%d9%8a%d8%a9/"
+              className="hover:text-secondary transition-colors duration-300"
+            >
+              سياسة الخصوصية
+            </Link>
+            <Link href="mailto:info@motherhoodclub.net" className="hover:text-secondary transition-colors duration-300">
+              اتصل بنا
+            </Link>
           </div>
         </div>
       </footer>
