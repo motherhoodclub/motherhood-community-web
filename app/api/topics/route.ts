@@ -61,22 +61,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(data[0])
-
-  // Send notification for new topic
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/new-topic`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        topicId: data[0].id,
-        title: data[0].title,
-        authorId: user.id,
-      }),
-    })
-  } catch (notificationError) {
-    console.error("Error sending new topic notification:", notificationError)
-    // Continue with the response even if notification fails
-  }
 }
