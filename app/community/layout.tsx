@@ -1118,7 +1118,7 @@ export default function CommunityLayout({
                       )}
                     >
                       <Link
-                        href="https://motherhoodclub.net/%D8%AD%D8%AC%D8%B2-%D8%A7%D8%B3%D8%AA%D8%B4%D8%A7%D8%B1%D8%A9/"
+                        href="https://motherhoodclub.net/%D8%A7%D9%84%D9%85%D8%AE%D8%AA%D8%B5%D9%88%D9%86/"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
