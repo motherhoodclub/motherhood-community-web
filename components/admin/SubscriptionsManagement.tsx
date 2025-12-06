@@ -6,6 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +22,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogHeader } from "@/components/ui/dialog"
-import { MoreHorizontal, Search, RefreshCw, ExternalLink, Info, CreditCard, User } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog"
+import { MoreHorizontal, Search, RefreshCw, ExternalLink, Info, CreditCard, User, Plus, Pencil, Trash2 } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -25,6 +34,7 @@ type Subscription = {
   stripe_subscription_id: string | null
   status: string
   plan_type: string
+  payment_type?: string
   current_period_start: string | null
   current_period_end: string | null
   cancel_at_period_end: boolean
@@ -32,6 +42,22 @@ type Subscription = {
   updated_at: string
   user_name?: string
   user_email?: string
+}
+
+type UserOption = {
+  id: string
+  username: string
+  email: string
+}
+
+const emptyFormData = {
+  user_id: "",
+  plan_type: "monthly",
+  status: "active",
+  payment_type: "one-time",
+  current_period_start: "",
+  current_period_end: "",
+  cancel_at_period_end: false,
 }
 
 export function SubscriptionsManagement({ subscriptions: initialSubscriptions }: { subscriptions: Subscription[] }) {
@@ -42,6 +68,17 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
   const [showDetailsDialog, setShowDetailsDialog] = useState(false)
   const [userDetails, setUserDetails] = useState<any>(null)
   const [loadingUserDetails, setLoadingUserDetails] = useState(false)
+
+  // CRUD state
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [formData, setFormData] = useState(emptyFormData)
+  const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
+  const [deletingSubscription, setDeletingSubscription] = useState<Subscription | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
@@ -49,6 +86,23 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
     console.log("Initial subscriptions:", initialSubscriptions)
     setSubscriptions(initialSubscriptions)
   }, [initialSubscriptions])
+
+  // Fetch users for the dropdown
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/admin/users")
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.users || [])
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
 
   const fetchUserDetails = async (userId: string) => {
     setLoadingUserDetails(true)
@@ -172,6 +226,154 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
     }
   }
 
+  // CRUD handlers
+  const handleAdd = () => {
+    setFormData(emptyFormData)
+    setIsAddDialogOpen(true)
+  }
+
+  const handleEdit = (subscription: Subscription) => {
+    setEditingSubscription(subscription)
+    setFormData({
+      user_id: subscription.user_id,
+      plan_type: subscription.plan_type,
+      status: subscription.status,
+      payment_type: subscription.payment_type || "recurring",
+      current_period_start: subscription.current_period_start?.split("T")[0] || "",
+      current_period_end: subscription.current_period_end?.split("T")[0] || "",
+      cancel_at_period_end: subscription.cancel_at_period_end,
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDelete = (subscription: Subscription) => {
+    setDeletingSubscription(subscription)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleCreateSubmit = async () => {
+    if (!formData.user_id) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار المستخدم",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const response = await fetch("/api/admin/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: formData.user_id,
+          plan_type: formData.plan_type,
+          status: formData.status,
+          payment_type: formData.payment_type,
+          current_period_start: formData.current_period_start || null,
+          current_period_end: formData.current_period_end || null,
+          cancel_at_period_end: formData.cancel_at_period_end,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to create subscription")
+      }
+
+      toast({
+        title: "تم بنجاح",
+        description: "تم إضافة الاشتراك بنجاح",
+      })
+      setIsAddDialogOpen(false)
+      refreshSubscriptions()
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء إضافة الاشتراك",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleUpdateSubmit = async () => {
+    if (!editingSubscription) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch("/api/admin/subscriptions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingSubscription.id,
+          user_id: formData.user_id,
+          plan_type: formData.plan_type,
+          status: formData.status,
+          payment_type: formData.payment_type,
+          current_period_start: formData.current_period_start || null,
+          current_period_end: formData.current_period_end || null,
+          cancel_at_period_end: formData.cancel_at_period_end,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to update subscription")
+      }
+
+      toast({
+        title: "تم بنجاح",
+        description: "تم تحديث الاشتراك بنجاح",
+      })
+      setIsEditDialogOpen(false)
+      setEditingSubscription(null)
+      refreshSubscriptions()
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء تحديث الاشتراك",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingSubscription) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/admin/subscriptions?id=${deletingSubscription.id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete subscription")
+      }
+
+      toast({
+        title: "تم بنجاح",
+        description: "تم حذف الاشتراك بنجاح",
+      })
+      setIsDeleteDialogOpen(false)
+      setDeletingSubscription(null)
+      refreshSubscriptions()
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء حذف الاشتراك",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const filteredSubscriptions = subscriptions.filter((sub) => {
     if (!searchTerm) return true
 
@@ -205,6 +407,8 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
         return <Badge variant="destructive">ملغي</Badge>
       case "trialing":
         return <Badge className="bg-blue-500">تجريبي</Badge>
+      case "past_due":
+        return <Badge className="bg-yellow-500">متأخر</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -220,6 +424,159 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
     }
   }
 
+  // Form dialog component
+  const SubscriptionFormDialog = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    title,
+    isEdit = false,
+  }: {
+    isOpen: boolean
+    onClose: () => void
+    onSubmit: () => void
+    title: string
+    isEdit?: boolean
+  }) => (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent dir="rtl" className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "تعديل بيانات الاشتراك" : "إضافة اشتراك جديد للمستخدم"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          {/* User Selection */}
+          <div className="grid gap-2">
+            <Label htmlFor="user">المستخدم</Label>
+            <Select
+              value={formData.user_id}
+              onValueChange={(value) => setFormData({ ...formData, user_id: value })}
+              disabled={isEdit}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر المستخدم" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.username || user.email || user.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Plan Type */}
+          <div className="grid gap-2">
+            <Label htmlFor="plan_type">نوع الخطة</Label>
+            <Select
+              value={formData.plan_type}
+              onValueChange={(value) => setFormData({ ...formData, plan_type: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">شهري</SelectItem>
+                <SelectItem value="yearly">سنوي</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status */}
+          <div className="grid gap-2">
+            <Label htmlFor="status">الحالة</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">نشط</SelectItem>
+                <SelectItem value="inactive">غير نشط</SelectItem>
+                <SelectItem value="canceled">ملغي</SelectItem>
+                <SelectItem value="trialing">تجريبي</SelectItem>
+                <SelectItem value="past_due">متأخر</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Payment Type */}
+          <div className="grid gap-2">
+            <Label htmlFor="payment_type">نوع الدفع</Label>
+            <Select
+              value={formData.payment_type}
+              onValueChange={(value) => setFormData({ ...formData, payment_type: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recurring">متكرر</SelectItem>
+                <SelectItem value="one-time">مرة واحدة</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="start_date">تاريخ البداية</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.current_period_start}
+                onChange={(e) => setFormData({ ...formData, current_period_start: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="end_date">تاريخ النهاية</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.current_period_end}
+                onChange={(e) => setFormData({ ...formData, current_period_end: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* Cancel at period end */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="cancel_at_period_end"
+              checked={formData.cancel_at_period_end}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, cancel_at_period_end: checked as boolean })
+              }
+            />
+            <Label htmlFor="cancel_at_period_end">إلغاء في نهاية الفترة</Label>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            إلغاء
+          </Button>
+          <Button onClick={onSubmit} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                جاري الحفظ...
+              </>
+            ) : (
+              "حفظ"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
   return (
     <>
       <Card>
@@ -229,10 +586,16 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
               <CardTitle>الاشتراكات</CardTitle>
               <CardDescription>إجمالي الاشتراكات: {subscriptions.length}</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={refreshSubscriptions} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              تحديث
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={refreshSubscriptions} disabled={isLoading}>
+                <RefreshCw className={`h-4 w-4 ml-2 ${isLoading ? "animate-spin" : ""}`} />
+                تحديث
+              </Button>
+              <Button size="sm" onClick={handleAdd}>
+                <Plus className="h-4 w-4 ml-2" />
+                إضافة اشتراك
+              </Button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Search className="w-4 h-4 opacity-50" />
@@ -284,7 +647,11 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs font-mono">{subscription.stripe_customer_id}</span>
+                      <span className="text-xs font-mono">
+                        {subscription.stripe_customer_id?.startsWith("manual_")
+                          ? "يدوي"
+                          : subscription.stripe_customer_id}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -296,8 +663,12 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => showSubscriptionDetails(subscription)}>
-                            <Info className="mr-2 h-4 w-4" />
+                            <Info className="ml-2 h-4 w-4" />
                             عرض التفاصيل
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(subscription)}>
+                            <Pencil className="ml-2 h-4 w-4" />
+                            تعديل
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={async () => {
@@ -308,38 +679,50 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                               })
                             }}
                           >
-                            <User className="mr-2 h-4 w-4" />
+                            <User className="ml-2 h-4 w-4" />
                             فحص بيانات المستخدم
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (subscription.stripe_customer_id) {
-                                window.open(
-                                  `https://dashboard.stripe.com/customers/${subscription.stripe_customer_id}`,
-                                  "_blank",
-                                )
-                              }
-                            }}
-                          >
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            فتح العميل في Stripe
-                          </DropdownMenuItem>
-                          {subscription.stripe_subscription_id && (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (subscription.stripe_subscription_id) {
-                                  window.open(
-                                    `https://dashboard.stripe.com/subscriptions/${subscription.stripe_subscription_id}`,
-                                    "_blank",
-                                  )
-                                }
-                              }}
-                            >
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              فتح الاشتراك في Stripe
-                            </DropdownMenuItem>
+                          {!subscription.stripe_customer_id?.startsWith("manual_") && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (subscription.stripe_customer_id) {
+                                    window.open(
+                                      `https://dashboard.stripe.com/customers/${subscription.stripe_customer_id}`,
+                                      "_blank",
+                                    )
+                                  }
+                                }}
+                              >
+                                <CreditCard className="ml-2 h-4 w-4" />
+                                فتح العميل في Stripe
+                              </DropdownMenuItem>
+                              {subscription.stripe_subscription_id && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (subscription.stripe_subscription_id) {
+                                      window.open(
+                                        `https://dashboard.stripe.com/subscriptions/${subscription.stripe_subscription_id}`,
+                                        "_blank",
+                                      )
+                                    }
+                                  }}
+                                >
+                                  <ExternalLink className="ml-2 h-4 w-4" />
+                                  فتح الاشتراك في Stripe
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                            </>
                           )}
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(subscription)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="ml-2 h-4 w-4" />
+                            حذف
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -356,6 +739,65 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
           </Table>
         </CardContent>
       </Card>
+
+      {/* Add Subscription Dialog */}
+      <SubscriptionFormDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSubmit={handleCreateSubmit}
+        title="إضافة اشتراك"
+      />
+
+      {/* Edit Subscription Dialog */}
+      <SubscriptionFormDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false)
+          setEditingSubscription(null)
+        }}
+        onSubmit={handleUpdateSubmit}
+        title="تعديل الاشتراك"
+        isEdit
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">تأكيد الحذف</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف اشتراك المستخدم "{deletingSubscription?.user_name || deletingSubscription?.user_email}"؟
+              <br />
+              <span className="text-red-500 font-medium">هذا الإجراء لا يمكن التراجع عنه.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setDeletingSubscription(null)
+              }}
+              disabled={isSaving}
+            >
+              إلغاء
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                  جاري الحذف...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="ml-2 h-4 w-4" />
+                  تأكيد الحذف
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Subscription Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
@@ -474,21 +916,25 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">معرف العميل في Stripe</h4>
                     <div className="flex items-center mt-1">
                       <p className="text-sm font-mono bg-gray-100 dark:bg-gray-800 p-1.5 rounded-md flex-grow overflow-x-auto">
-                        {selectedSubscription.stripe_customer_id}
+                        {selectedSubscription.stripe_customer_id?.startsWith("manual_")
+                          ? "اشتراك يدوي"
+                          : selectedSubscription.stripe_customer_id}
                       </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mr-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        onClick={() => {
-                          window.open(
-                            `https://dashboard.stripe.com/customers/${selectedSubscription.stripe_customer_id}`,
-                            "_blank",
-                          )
-                        }}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
+                      {!selectedSubscription.stripe_customer_id?.startsWith("manual_") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mr-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            window.open(
+                              `https://dashboard.stripe.com/customers/${selectedSubscription.stripe_customer_id}`,
+                              "_blank",
+                            )
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -600,7 +1046,7 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
             <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
               إغلاق
             </Button>
-            {selectedSubscription && selectedSubscription.stripe_customer_id && (
+            {selectedSubscription && !selectedSubscription.stripe_customer_id?.startsWith("manual_") && (
               <Button
                 onClick={() => {
                   window.open(
