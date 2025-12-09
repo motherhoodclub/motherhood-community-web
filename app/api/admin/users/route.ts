@@ -104,6 +104,10 @@ export async function GET(request: Request) {
     }
 
     // Combine the data from both sources
+    // First, create a map of profiles by ID
+    const profilesMap = new Map(profiles.map((p) => [p.id, p]))
+
+    // Start with profiles and add auth data
     const combinedUsers = profiles.map((profile) => {
       const authUser = authUsers.users.find((u) => u.id === profile.id)
 
@@ -116,22 +120,35 @@ export async function GET(request: Request) {
       }
     })
 
-    // Log a sample combined user for debugging
-    if (combinedUsers.length > 0) {
-      console.log("Sample combined user:", {
-        id: combinedUsers[0].id,
-        username: combinedUsers[0].username,
-        email: combinedUsers[0].email,
-        created_at: combinedUsers[0].created_at,
-      })
-    }
+    // Add auth users that don't have a profile (orphaned auth users)
+    const orphanedAuthUsers = authUsers.users
+      .filter((authUser) => !profilesMap.has(authUser.id))
+      .map((authUser) => ({
+        id: authUser.id,
+        username: null,
+        full_name: authUser.user_metadata?.full_name || null,
+        email: authUser.email,
+        phone: authUser.phone || null,
+        is_admin: false,
+        created_at: authUser.created_at,
+        last_sign_in_at: authUser.last_sign_in_at,
+        // Mark as orphaned for visibility
+        _orphaned: true,
+      }))
+
+    // Combine both lists
+    const allUsers = [...combinedUsers, ...orphanedAuthUsers]
+
+    // Log debug info
+    console.log(`Combined: ${combinedUsers.length} with profiles, ${orphanedAuthUsers.length} orphaned auth users`)
 
     return NextResponse.json({
-      users: combinedUsers,
+      users: allUsers,
       debug: {
         profilesCount: profiles.length,
         authUsersCount: authUsers.users.length,
-        combinedCount: combinedUsers.length,
+        combinedCount: allUsers.length,
+        orphanedCount: orphanedAuthUsers.length,
         serviceRoleAvailable: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
       },
     })
