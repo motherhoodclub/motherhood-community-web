@@ -60,6 +60,141 @@ const emptyFormData = {
   cancel_at_period_end: false,
 }
 
+// Searchable User Select Component
+function UserSearchSelect({
+  users,
+  value,
+  onChange,
+  disabled = false,
+}: {
+  users: UserOption[]
+  value: string
+  onChange: (userId: string) => void
+  disabled?: boolean
+}) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<UserOption | null>(null)
+
+  // Find selected user on mount or when value changes
+  useEffect(() => {
+    if (value) {
+      const user = users.find((u) => u.id === value)
+      setSelectedUser(user || null)
+    } else {
+      setSelectedUser(null)
+    }
+  }, [value, users])
+
+  // Filter users based on search query (by email primarily)
+  const filteredUsers = users.filter((user) => {
+    if (!searchQuery.trim()) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      (user.email && user.email.toLowerCase().includes(query)) ||
+      (user.username && user.username.toLowerCase().includes(query)) ||
+      user.id.toLowerCase().includes(query)
+    )
+  }).slice(0, 50) // Limit to 50 results for performance
+
+  const handleSelect = (user: UserOption) => {
+    setSelectedUser(user)
+    onChange(user.id)
+    setIsOpen(false)
+    setSearchQuery("")
+  }
+
+  return (
+    <div className="relative">
+      {/* Selected user display or search input */}
+      {selectedUser && !isOpen ? (
+        <div
+          className={`flex items-center justify-between p-2 border rounded-md bg-background ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-accent"}`}
+          onClick={() => !disabled && setIsOpen(true)}
+        >
+          <div className="flex flex-col">
+            <span className="text-sm font-medium" dir="ltr">{selectedUser.email || "No email"}</span>
+            {selectedUser.username && (
+              <span className="text-xs text-muted-foreground">@{selectedUser.username}</span>
+            )}
+          </div>
+          {!disabled && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedUser(null)
+                onChange("")
+                setIsOpen(true)
+              }}
+            >
+              تغيير
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="ابحث بالبريد الإلكتروني..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setIsOpen(true)
+            }}
+            onFocus={() => setIsOpen(true)}
+            className="pr-10"
+            dir="ltr"
+            disabled={disabled}
+          />
+        </div>
+      )}
+
+      {/* Dropdown with filtered users */}
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {filteredUsers.length === 0 ? (
+            <div className="p-3 text-center text-muted-foreground text-sm">
+              {searchQuery ? "لا توجد نتائج" : "اكتب للبحث..."}
+            </div>
+          ) : (
+            <>
+              <div className="p-2 text-xs text-muted-foreground border-b">
+                {filteredUsers.length} نتيجة {searchQuery && `لـ "${searchQuery}"`}
+              </div>
+              {filteredUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="p-2 hover:bg-accent cursor-pointer border-b last:border-b-0"
+                  onClick={() => handleSelect(user)}
+                >
+                  <div className="text-sm font-medium" dir="ltr">{user.email || "No email"}</div>
+                  <div className="text-xs text-muted-foreground flex gap-2">
+                    {user.username && <span>@{user.username}</span>}
+                    <span className="font-mono">{user.id.substring(0, 8)}...</span>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+          <div
+            className="p-2 text-center text-xs text-muted-foreground border-t cursor-pointer hover:bg-accent"
+            onClick={() => {
+              setIsOpen(false)
+              setSearchQuery("")
+            }}
+          >
+            إغلاق
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function SubscriptionsManagement({ subscriptions: initialSubscriptions }: { subscriptions: Subscription[] }) {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>(initialSubscriptions)
   const [searchTerm, setSearchTerm] = useState("")
@@ -448,25 +583,15 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* User Selection */}
+          {/* User Selection - Searchable by Email */}
           <div className="grid gap-2">
-            <Label htmlFor="user">المستخدم</Label>
-            <Select
+            <Label htmlFor="user">المستخدم (ابحث بالبريد الإلكتروني)</Label>
+            <UserSearchSelect
+              users={users}
               value={formData.user_id}
-              onValueChange={(value) => setFormData({ ...formData, user_id: value })}
+              onChange={(userId) => setFormData({ ...formData, user_id: userId })}
               disabled={isEdit}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="اختر المستخدم" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.username || user.email || user.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
 
           {/* Plan Type */}
