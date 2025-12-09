@@ -113,10 +113,8 @@ function UserSearchSelect({
           onClick={() => !disabled && setIsOpen(true)}
         >
           <div className="flex flex-col">
-            <span className="text-sm font-medium" dir="ltr">{selectedUser.email || "No email"}</span>
-            {selectedUser.username && (
-              <span className="text-xs text-muted-foreground">@{selectedUser.username}</span>
-            )}
+            <span className="text-sm font-medium">{selectedUser.username || "بدون اسم"}</span>
+            <span className="text-xs text-muted-foreground" dir="ltr">{selectedUser.email || "No email"}</span>
           </div>
           {!disabled && (
             <Button
@@ -171,11 +169,8 @@ function UserSearchSelect({
                   className="p-2 hover:bg-accent cursor-pointer border-b last:border-b-0"
                   onClick={() => handleSelect(user)}
                 >
-                  <div className="text-sm font-medium" dir="ltr">{user.email || "No email"}</div>
-                  <div className="text-xs text-muted-foreground flex gap-2">
-                    {user.username && <span>@{user.username}</span>}
-                    <span className="font-mono">{user.id.substring(0, 8)}...</span>
-                  </div>
+                  <div className="text-sm font-medium">{user.username || "بدون اسم"}</div>
+                  <div className="text-xs text-muted-foreground" dir="ltr">{user.email || "No email"}</div>
                 </div>
               ))}
             </>
@@ -737,6 +732,7 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
             <TableHeader>
               <TableRow>
                 <TableHead>المستخدم</TableHead>
+                <TableHead>البريد الإلكتروني</TableHead>
                 <TableHead>نوع الاشتراك</TableHead>
                 <TableHead>الحالة</TableHead>
                 <TableHead>تاريخ البدء</TableHead>
@@ -751,12 +747,10 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                 filteredSubscriptions.map((subscription) => (
                   <TableRow key={subscription.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{subscription.user_name || subscription.user_id}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {subscription.user_email || "بدون بريد إلكتروني"}
-                        </div>
-                      </div>
+                      <div className="font-medium">{subscription.user_name || "غير متوفر"}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm" dir="ltr">{subscription.user_email || "بدون بريد"}</span>
                     </TableCell>
                     <TableCell>{subscription.plan_type === "monthly" ? "شهري" : "سنوي"}</TableCell>
                     <TableCell>{getStatusBadge(subscription.status)}</TableCell>
@@ -855,7 +849,7 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-6">
+                  <TableCell colSpan={9} className="text-center py-6">
                     {searchTerm ? "لا توجد اشتراكات مطابقة لبحثك" : "لا توجد اشتراكات حالياً"}
                   </TableCell>
                 </TableRow>
