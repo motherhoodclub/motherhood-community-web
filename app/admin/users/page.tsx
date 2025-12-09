@@ -1,22 +1,34 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Mail, Calendar, Shield, Search, UserCheck, UserX, RefreshCw, AlertCircle, Info } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { User, Mail, Calendar, Shield, Search, UserCheck, UserX, RefreshCw, AlertCircle, Info, ChevronRight, ChevronLeft, CreditCard } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+
+const USERS_PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState<string | null>(null)
   const [error, setError] = useState(null)
   const [debugInfo, setDebugInfo] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [usersPerPage, setUsersPerPage] = useState(10)
+  const [filterType, setFilterType] = useState<"all" | "admin" | "user">("all")
   const { toast } = useToast()
   const searchTimeout = useRef(null)
 
@@ -42,29 +54,8 @@ export default function AdminUsersPage() {
         throw new Error("Invalid data format received from server")
       }
 
-      // Debug the received data
       console.log("Received users data:", data.users.length)
-      if (data.users.length > 0) {
-        console.log("First user sample:", {
-          id: data.users[0].id,
-          email: data.users[0].email || "No email",
-          username: data.users[0].username || "No username",
-        })
-      }
-
-      let filteredUsers = data.users
-
-      // Apply client-side filtering if search term exists
-      if (searchTerm && searchTerm.trim() !== "") {
-        filteredUsers = filteredUsers.filter(
-          (user) =>
-            (user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase())),
-        )
-      }
-
-      setUsers(filteredUsers || [])
+      setUsers(data.users || [])
     } catch (err) {
       console.error("Exception fetching users:", err)
       setError(err.message || "حدث خطأ أثناء جلب بيانات المستخدمين")
@@ -78,48 +69,84 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Filter and search users
+  const filteredUsers = useMemo(() => {
+    let result = users
+
+    // Apply role filter
+    if (filterType === "admin") {
+      result = result.filter((user) => user.is_admin)
+    } else if (filterType === "user") {
+      result = result.filter((user) => !user.is_admin)
+    }
+
+    // Apply search filter
+    if (searchTerm && searchTerm.trim() !== "") {
+      const search = searchTerm.toLowerCase().trim()
+      result = result.filter(
+        (user) =>
+          (user.username && user.username.toLowerCase().includes(search)) ||
+          (user.email && user.email.toLowerCase().includes(search)) ||
+          (user.full_name && user.full_name.toLowerCase().includes(search)) ||
+          (user.id && user.id.toLowerCase().includes(search))
+      )
+    }
+
+    return result
+  }, [users, searchTerm, filterType])
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
+  const startIndex = (currentPage - 1) * usersPerPage
+  const endIndex = startIndex + usersPerPage
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex)
+
+  // Reset to page 1 when search/filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, filterType, usersPerPage])
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value)
-    // Use setTimeout to debounce the search
-    clearTimeout(searchTimeout.current)
-    searchTimeout.current = setTimeout(() => {
-      fetchUsers()
-    }, 500)
   }
 
-  const toggleAdminStatus = async (userId, isAdmin) => {
-    setIsUpdating(true)
+  const toggleAdminStatus = async (userId: string, isAdmin: boolean) => {
+    setIsUpdating(userId)
     try {
-      // For this example, we're simulating the API call since we don't have the actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate network delay
+      const response = await fetch("/api/admin/update-user-role", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          isAdmin: !isAdmin,
+        }),
+      })
 
-      // In a real implementation, you would make an API call like this:
-      // const response = await fetch("/api/admin/update-user-role", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     userId,
-      //     isAdmin: !isAdmin,
-      //   }),
-      // })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "فشل تحديث صلاحيات المستخدم")
+      }
 
       toast({
         title: "تم بنجاح",
-        description: `تم تحديث صلاحيات المستخدم بنجاح`,
+        description: !isAdmin ? "تم ترقية المستخدم إلى مشرف" : "تم إلغاء صلاحيات المشرف",
       })
 
-      // Update user in the local state to avoid refetching
-      setUsers((prevUsers) => prevUsers.map((user) => (user.id === userId ? { ...user, is_admin: !isAdmin } : user)))
-    } catch (error) {
+      // Update user in the local state
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => (user.id === userId ? { ...user, is_admin: !isAdmin } : user))
+      )
+    } catch (error: any) {
       toast({
         title: "خطأ",
-        description: "فشل تحديث صلاحيات المستخدم",
+        description: error.message || "فشل تحديث صلاحيات المستخدم",
         variant: "destructive",
       })
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(null)
     }
   }
 
@@ -130,6 +157,21 @@ export default function AdminUsersPage() {
         year: "numeric",
         month: "long",
         day: "numeric",
+      })
+    } catch (e) {
+      return "تاريخ غير صالح"
+    }
+  }
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "غير متوفر"
+    try {
+      return new Date(dateString).toLocaleString("ar-SA", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       })
     } catch (e) {
       return "تاريخ غير صالح"
@@ -149,15 +191,42 @@ export default function AdminUsersPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-2 rtl:space-x-reverse mb-4">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="البحث عن المستخدمين بالاسم أو البريد الإلكتروني"
-              value={searchTerm}
-              onChange={handleSearch}
-              className="flex-1"
-            />
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex items-center gap-2 flex-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="البحث بالاسم أو البريد الإلكتروني أو المعرف..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="flex-1"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={filterType} onValueChange={(value: "all" | "admin" | "user") => setFilterType(value)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="تصفية حسب" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل</SelectItem>
+                  <SelectItem value="admin">المشرفين</SelectItem>
+                  <SelectItem value="user">المستخدمين</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={usersPerPage.toString()} onValueChange={(value) => setUsersPerPage(Number(value))}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {USERS_PER_PAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option.toString()}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {error && (
@@ -191,8 +260,9 @@ export default function AdminUsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right whitespace-nowrap font-bold">المعلومات الشخصية</TableHead>
-                  <TableHead className="text-right whitespace-nowrap font-bold">معلومات الحساب</TableHead>
+                  <TableHead className="text-right whitespace-nowrap font-bold">البريد الإلكتروني</TableHead>
                   <TableHead className="text-right whitespace-nowrap font-bold">تاريخ الانضمام</TableHead>
+                  <TableHead className="text-right whitespace-nowrap font-bold">آخر دخول</TableHead>
                   <TableHead className="text-right whitespace-nowrap font-bold">الصلاحيات</TableHead>
                   <TableHead className="text-right whitespace-nowrap font-bold">الإجراءات</TableHead>
                 </TableRow>
@@ -200,16 +270,16 @@ export default function AdminUsersPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       <div className="flex flex-col items-center justify-center">
                         <RefreshCw className="h-8 w-8 animate-spin text-primary mb-2" />
                         <span>جاري تحميل بيانات المستخدمين...</span>
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : users.length === 0 ? (
+                ) : paginatedUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       <div className="flex flex-col items-center justify-center">
                         <UserX className="h-8 w-8 text-muted-foreground mb-2" />
                         <span>لا يوجد مستخدمين مطابقين للبحث</span>
@@ -217,73 +287,84 @@ export default function AdminUsersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => (
+                  paginatedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="text-right">
                         <div className="flex flex-col">
                           <div className="font-medium flex items-center gap-1">
                             <User className="h-4 w-4 text-muted-foreground" />
-                            {user.full_name || user.username || user.id.substring(0, 8) + "..." || "غير متوفر"}
+                            {user.full_name || user.username || "غير متوفر"}
                           </div>
-                          {user.username && user.username !== user.full_name && (
+                          {user.username && (
                             <div className="text-sm text-muted-foreground">@{user.username}</div>
                           )}
+                          <div className="text-xs text-muted-foreground font-mono mt-1">
+                            {user.id.substring(0, 8)}...
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            {user.email ? (
-                              <span dir="ltr" className="text-primary">
-                                {user.email}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">لا يوجد بريد إلكتروني</span>
-                            )}
-                          </div>
-                          {user.phone && (
-                            <div className="text-sm text-muted-foreground" dir="ltr">
-                              {user.phone}
-                            </div>
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          {user.email ? (
+                            <span dir="ltr" className="text-primary text-sm">
+                              {user.email}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">لا يوجد</span>
                           )}
                         </div>
+                        {user.phone && (
+                          <div className="text-sm text-muted-foreground mt-1" dir="ltr">
+                            {user.phone}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {formatDate(user.created_at)}
+                          <span className="text-sm">{formatDate(user.created_at)}</span>
                         </div>
-                        {user.last_sign_in_at && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            آخر دخول: {formatDate(user.last_sign_in_at)}
-                          </div>
-                        )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center gap-1">
-                          <Shield className="h-4 w-4 text-muted-foreground" />
-                          {user.is_admin ? (
-                            <Badge className="bg-purple-500 hover:bg-purple-600">مدير</Badge>
-                          ) : (
-                            <Badge variant="outline">مستخدم</Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDateTime(user.last_sign_in_at)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            <Shield className="h-4 w-4 text-muted-foreground" />
+                            {user.is_admin ? (
+                              <Badge className="bg-purple-500 hover:bg-purple-600">مشرف</Badge>
+                            ) : (
+                              <Badge variant="outline">مستخدم</Badge>
+                            )}
+                          </div>
+                          {user.subscription_status && (
+                            <div className="flex items-center gap-1">
+                              <CreditCard className="h-3 w-3 text-muted-foreground" />
+                              <Badge
+                                variant="secondary"
+                                className={user.subscription_status === "active" ? "bg-green-100 text-green-800" : ""}
+                              >
+                                {user.subscription_status === "active" ? "مشترك" : "غير مشترك"}
+                              </Badge>
+                            </div>
                           )}
                         </div>
-                        {user.subscription_status && (
-                          <Badge variant="secondary" className="mt-1">
-                            {user.subscription_status === "active" ? "مشترك" : "غير مشترك"}
-                          </Badge>
-                        )}
                       </TableCell>
                       <TableCell>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => toggleAdminStatus(user.id, user.is_admin)}
-                          disabled={isUpdating}
+                          disabled={isUpdating === user.id}
                           className="w-full"
                         >
-                          {user.is_admin ? (
+                          {isUpdating === user.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : user.is_admin ? (
                             <>
                               <UserX className="h-4 w-4 ml-1" />
                               إلغاء الإشراف
@@ -303,7 +384,42 @@ export default function AdminUsersPage() {
             </Table>
           </div>
 
-          <div className="mt-4 text-sm text-muted-foreground text-center">إجمالي المستخدمين: {users.length}</div>
+          {/* Pagination Controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+            <div className="text-sm text-muted-foreground">
+              عرض {filteredUsers.length > 0 ? startIndex + 1 : 0} - {Math.min(endIndex, filteredUsers.length)} من {filteredUsers.length} مستخدم
+              {searchTerm && ` (تصفية من ${users.length})`}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                <ChevronRight className="h-4 w-4 ml-1" />
+                السابق
+              </Button>
+
+              <div className="flex items-center gap-1 px-2">
+                <span className="text-sm">صفحة</span>
+                <span className="font-medium">{currentPage}</span>
+                <span className="text-sm">من</span>
+                <span className="font-medium">{totalPages || 1}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage >= totalPages || isLoading}
+              >
+                التالي
+                <ChevronLeft className="h-4 w-4 mr-1" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
