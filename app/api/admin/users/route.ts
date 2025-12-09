@@ -51,21 +51,44 @@ export async function GET(request: Request) {
     console.log(`Retrieved ${profiles.length} user profiles`)
 
     // Get all auth users using the admin client with service role
-    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+    // Fetch all pages to get all users
+    let allAuthUsers: any[] = []
+    let page = 1
+    const perPage = 1000
 
-    if (authError) {
-      console.error("Error fetching auth users:", authError.message)
-      // If we can't get auth data, return just the profiles
+    try {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage,
+      })
+
+      if (authError) {
+        console.error("Error fetching auth users:", authError.message)
+        // If we can't get auth data, return just the profiles
+        return NextResponse.json({
+          users: profiles,
+          debug: {
+            profilesCount: profiles.length,
+            authError: authError.message,
+            serviceRoleAvailable: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          },
+        })
+      }
+
+      allAuthUsers = authData.users || []
+    } catch (err: any) {
+      console.error("Error fetching auth users:", err.message)
       return NextResponse.json({
         users: profiles,
         debug: {
           profilesCount: profiles.length,
-          authError: authError.message,
+          authError: err.message,
           serviceRoleAvailable: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         },
       })
     }
 
+    const authUsers = { users: allAuthUsers }
     console.log(`Retrieved ${authUsers.users.length} auth users`)
 
     // Log first few auth users for debugging (without sensitive info)
@@ -86,7 +109,8 @@ export async function GET(request: Request) {
 
       return {
         ...profile,
-        email: authUser?.email || null,
+        // Use auth email first, then profile email as fallback
+        email: authUser?.email || profile.email || null,
         phone: authUser?.phone || profile.phone || null,
         last_sign_in_at: authUser?.last_sign_in_at || null,
       }
