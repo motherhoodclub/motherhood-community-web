@@ -51,31 +51,42 @@ export async function GET(request: Request) {
     console.log(`Retrieved ${profiles.length} user profiles`)
 
     // Get all auth users using the admin client with service role
-    // Fetch all pages to get all users
+    // Fetch ALL pages to get ALL users
     let allAuthUsers: any[] = []
-    let page = 1
     const perPage = 1000
+    let page = 1
+    let hasMore = true
 
     try {
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage,
-      })
-
-      if (authError) {
-        console.error("Error fetching auth users:", authError.message)
-        // If we can't get auth data, return just the profiles
-        return NextResponse.json({
-          users: profiles,
-          debug: {
-            profilesCount: profiles.length,
-            authError: authError.message,
-            serviceRoleAvailable: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-          },
+      while (hasMore) {
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage,
         })
-      }
 
-      allAuthUsers = authData.users || []
+        if (authError) {
+          console.error("Error fetching auth users:", authError.message)
+          // If we can't get auth data, return just the profiles
+          return NextResponse.json({
+            users: profiles,
+            debug: {
+              profilesCount: profiles.length,
+              authError: authError.message,
+              serviceRoleAvailable: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+            },
+          })
+        }
+
+        const users = authData.users || []
+        allAuthUsers = [...allAuthUsers, ...users]
+
+        // If we got less than perPage, we've reached the end
+        if (users.length < perPage) {
+          hasMore = false
+        } else {
+          page++
+        }
+      }
     } catch (err: any) {
       console.error("Error fetching auth users:", err.message)
       return NextResponse.json({
