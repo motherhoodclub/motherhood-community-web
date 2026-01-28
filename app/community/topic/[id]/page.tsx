@@ -3,15 +3,27 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Eye, MessageCircle, Reply, MoreVertical, RefreshCw } from "lucide-react"
+import { Eye, MessageCircle, Reply, MoreVertical, RefreshCw, Trash2, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { ShareButton } from "@/components/share-button"
 import Link from "next/link"
 import { formatArabicDateTime } from "@/lib/date-utils"
@@ -64,6 +76,8 @@ export default function TopicPage({ params }: { params: { id: string } }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [imageError, setImageError] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
@@ -84,6 +98,71 @@ export default function TopicPage({ params }: { params: { id: string } }) {
 
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1)
+  }
+
+  const handleDeleteTopic = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "غير مصرح",
+        description: "ليس لديك صلاحيات لحذف هذا الموضوع",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      // Verify admin status from the database
+      const { data: authData } = await supabase.auth.getSession()
+      if (!authData.session) {
+        throw new Error("جلسة المستخدم غير صالحة")
+      }
+
+      const { data: adminCheck, error: adminCheckError } = await supabase
+        .from("user_profiles")
+        .select("is_admin")
+        .eq("id", authData.session.user.id)
+        .single()
+
+      if (adminCheckError || !adminCheck || !adminCheck.is_admin) {
+        throw new Error("ليس لديك صلاحيات كافية لحذف هذا الموضوع")
+      }
+
+      // Delete all comments associated with this topic first
+      const { error: commentsError } = await supabase
+        .from("comments")
+        .delete()
+        .eq("topic_id", params.id)
+
+      if (commentsError) {
+        console.error("Error deleting comments:", commentsError)
+      }
+
+      // Delete the topic
+      const { error } = await supabase
+        .from("topics")
+        .delete()
+        .eq("id", params.id)
+
+      if (error) throw error
+
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف الموضوع بنجاح",
+      })
+
+      // Redirect to community page
+      router.push("/community")
+    } catch (error: any) {
+      console.error("Error deleting topic:", error)
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في حذف الموضوع",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const getCurrentUser = async () => {
@@ -659,9 +738,42 @@ export default function TopicPage({ params }: { params: { id: string } }) {
             <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2 mt-2 sm:mt-0">
               <Badge>{topic.category}</Badge>
               {isAdmin && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/community/edit-topic/${topic.id}`}>تعديل الموضوع</Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/community/edit-topic/${topic.id}`}>تعديل</Link>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" disabled={isDeleting}>
+                        {isDeleting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4 ml-1" />
+                            حذف
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>تأكيد حذف الموضوع</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          هل أنت متأكد من حذف هذا الموضوع؟ سيتم حذف جميع التعليقات المرتبطة به. هذا الإجراء لا يمكن التراجع عنه.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteTopic}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          حذف الموضوع
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
               <Button variant="ghost" size="sm" onClick={refreshData} title="تحديث البيانات">
                 <RefreshCw className="h-4 w-4" />

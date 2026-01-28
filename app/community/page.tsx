@@ -17,6 +17,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Pagination } from "@/components/pagination"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Icons
 import {
@@ -30,6 +40,8 @@ import {
   BookmarkIcon,
   Activity,
   HelpCircle,
+  Loader2,
+  Trash2,
 } from "lucide-react"
 
 export default function CommunityPage() {
@@ -49,6 +61,9 @@ export default function CommunityPage() {
   const [bookmarkedTopics, setBookmarkedTopics] = useState({})
   const [currentUser, setCurrentUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{ id: number; isQuestion: boolean } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -393,14 +408,16 @@ export default function CommunityPage() {
     })
   }
 
-  const handleDeleteItem = async (id, isQuestion = false) => {
+  const openDeleteDialog = (id: number, isQuestion = false) => {
     if (!isAdmin) return
+    setItemToDelete({ id, isQuestion })
+    setDeleteDialogOpen(true)
+  }
 
-    // Show confirmation dialog
-    if (!confirm("هل أنت متأكد من حذف هذا الموضوع؟")) {
-      return // User canceled the deletion
-    }
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete || !isAdmin) return
 
+    setIsDeleting(true)
     try {
       // First get the current user's auth token to ensure proper authorization
       const { data: authData } = await supabase.auth.getSession()
@@ -420,21 +437,33 @@ export default function CommunityPage() {
         throw new Error("ليس لديك صلاحيات كافية لحذف هذا الموضوع")
       }
 
-      // Perform the delete operation with explicit RLS bypass for admins
+      // Delete associated comments first if it's a topic
+      if (!itemToDelete.isQuestion) {
+        const { error: commentsError } = await supabase
+          .from("comments")
+          .delete()
+          .eq("topic_id", itemToDelete.id)
+
+        if (commentsError) {
+          console.error("Error deleting comments:", commentsError)
+        }
+      }
+
+      // Perform the delete operation
       const { error } = await supabase
-        .from(isQuestion ? "questions" : "topics")
+        .from(itemToDelete.isQuestion ? "questions" : "topics")
         .delete()
-        .eq("id", id)
+        .eq("id", itemToDelete.id)
 
       if (error) {
         throw error
       }
 
       // Remove the item from the local state
-      if (isQuestion) {
-        setQuestions(questions.filter((q) => q.id !== id))
+      if (itemToDelete.isQuestion) {
+        setQuestions(questions.filter((q) => q.id !== itemToDelete.id))
       } else {
-        setTopics(topics.filter((t) => t.id !== id))
+        setTopics(topics.filter((t) => t.id !== itemToDelete.id))
       }
 
       toast({
@@ -442,13 +471,18 @@ export default function CommunityPage() {
         description: "تم حذف الموضوع بنجاح",
         variant: "default",
       })
-    } catch (error) {
+
+      setDeleteDialogOpen(false)
+      setItemToDelete(null)
+    } catch (error: any) {
       console.error("Error deleting item:", error)
       toast({
         title: "خطأ",
-        description: `فشل في حذف الموضوع: ${error.message}`,
+        description: error.message || "فشل في حذف الموضوع",
         variant: "destructive",
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -822,8 +856,9 @@ export default function CommunityPage() {
                                   variant="ghost"
                                   size="sm"
                                   className="px-3 sm:px-4 py-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 hover:text-red-700 transition-all duration-200 text-sm font-medium"
-                                  onClick={() => handleDeleteItem(item.id, isQuestion)}
+                                  onClick={() => openDeleteDialog(item.id, isQuestion)}
                                 >
+                                  <Trash2 className="h-4 w-4 ml-1" />
                                   حذف
                                 </Button>
                               </>
@@ -867,6 +902,35 @@ export default function CommunityPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف الموضوع</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذا الموضوع؟ سيتم حذف جميع التعليقات المرتبطة به. هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  جاري الحذف...
+                </>
+              ) : (
+                "حذف الموضوع"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
