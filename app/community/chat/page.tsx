@@ -267,7 +267,18 @@ export default function ChatPage() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+
+      // Check for supported MIME type
+      let mimeType = "audio/webm"
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus"
+      } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+        mimeType = "audio/ogg;codecs=opus"
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4"
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
@@ -278,12 +289,13 @@ export default function ChatPage() {
       }
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
         stream.getTracks().forEach((track) => track.stop())
-        await uploadAndSendVoiceMessage(audioBlob)
+        await uploadAndSendVoiceMessage(audioBlob, mimeType)
       }
 
-      mediaRecorder.start()
+      // Start with timeslice to capture data every 200ms
+      mediaRecorder.start(200)
       setIsRecording(true)
       setRecordingTime(0)
 
@@ -311,16 +323,21 @@ export default function ChatPage() {
     }
   }
 
-  const uploadAndSendVoiceMessage = async (audioBlob: Blob) => {
+  const uploadAndSendVoiceMessage = async (audioBlob: Blob, mimeType: string) => {
     if (!user || !userProfile) return
 
     setIsSending(true)
     try {
-      const fileName = `${user.id}-${Date.now()}.webm`
+      // Determine file extension based on MIME type
+      let extension = "webm"
+      if (mimeType.includes("ogg")) extension = "ogg"
+      else if (mimeType.includes("mp4")) extension = "mp4"
+
+      const fileName = `${user.id}-${Date.now()}.${extension}`
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("voice-messages")
         .upload(fileName, audioBlob, {
-          contentType: "audio/webm",
+          contentType: mimeType,
         })
 
       if (uploadError) throw uploadError
