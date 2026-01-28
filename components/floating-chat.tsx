@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Send, MessageCircle, Clock, X, Minimize2 } from "lucide-react"
+import { Send, MessageCircle, Clock, X, Minimize2, Mic, Square, Play, Pause } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
@@ -17,6 +17,7 @@ import { formatArabicDate } from "@/lib/date-utils"
 interface Message {
   id: string
   content: string
+  audio_url?: string
   user_id: string
   created_at: string
   user_profiles: {
@@ -46,7 +47,14 @@ export default function FloatingChat() {
   const [isSending, setIsSending] = useState(false)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
@@ -91,6 +99,7 @@ export default function FloatingChat() {
           .select(`
             id,
             content,
+            audio_url,
             user_id,
             created_at,
             user_profiles (
@@ -100,7 +109,7 @@ export default function FloatingChat() {
             )
           `)
           .order("created_at", { ascending: true })
-          .limit(50)
+          .limit(100)
 
         if (messagesError) throw messagesError
         setMessages(messagesData || [])
@@ -167,6 +176,7 @@ export default function FloatingChat() {
                   .select(`
                     id,
                     content,
+                    audio_url,
                     user_id,
                     created_at,
                     user_profiles (
@@ -286,6 +296,129 @@ export default function FloatingChat() {
       })
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      let mimeType = "audio/webm"
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus"
+      } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+        mimeType = "audio/ogg;codecs=opus"
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4"
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType })
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        stream.getTracks().forEach((track) => track.stop())
+        await uploadAndSendVoiceMessage(audioBlob, mimeType)
+      }
+
+      mediaRecorder.start(200)
+      setIsRecording(true)
+      setRecordingTime(0)
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1)
+      }, 1000)
+    } catch (error) {
+      console.error("Error starting recording:", error)
+      toast({
+        title: "خطأ",
+        description: "فشل في الوصول إلى الميكروفون",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current)
+        recordingTimerRef.current = null
+      }
+    }
+  }
+
+  const uploadAndSendVoiceMessage = async (audioBlob: Blob, mimeType: string) => {
+    if (!user || !userProfile) return
+
+    setIsSending(true)
+    try {
+      let extension = "webm"
+      if (mimeType.includes("ogg")) extension = "ogg"
+      else if (mimeType.includes("mp4")) extension = "mp4"
+
+      const fileName = `${user.id}-${Date.now()}.${extension}`
+      const { error: uploadError } = await supabase.storage
+        .from("voice-messages")
+        .upload(fileName, audioBlob, {
+          contentType: mimeType,
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage.from("voice-messages").getPublicUrl(fileName)
+
+      const { error } = await supabase.from("chat_messages").insert({
+        content: "🎤 رسالة صوتية",
+        audio_url: urlData.publicUrl,
+        user_id: user.id,
+      })
+
+      if (error) throw error
+    } catch (error) {
+      console.error("Error sending voice message:", error)
+      toast({
+        title: "خطأ",
+        description: "فشل في إرسال الرسالة الصوتية",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSending(false)
+      setRecordingTime(0)
+    }
+  }
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  const playAudio = (messageId: string, audioUrl: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
+
+    if (playingAudioId === messageId) {
+      setPlayingAudioId(null)
+      return
+    }
+
+    const audio = new Audio(audioUrl)
+    audioRef.current = audio
+    audio.play()
+    setPlayingAudioId(messageId)
+
+    audio.onended = () => {
+      setPlayingAudioId(null)
     }
   }
 
@@ -414,7 +547,31 @@ export default function FloatingChat() {
                                 message.user_id === user.id ? "bg-primary text-primary-foreground" : "bg-muted",
                               )}
                             >
-                              {message.content}
+                              {message.audio_url ? (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                      "h-6 w-6 p-0 rounded-full",
+                                      message.user_id === user.id
+                                        ? "hover:bg-primary-foreground/20"
+                                        : "hover:bg-muted-foreground/20",
+                                    )}
+                                    onClick={() => playAudio(message.id, message.audio_url!)}
+                                  >
+                                    {playingAudioId === message.id ? (
+                                      <Pause className="h-3 w-3" />
+                                    ) : (
+                                      <Play className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                  <span>صوتية</span>
+                                </div>
+                              ) : (
+                                message.content
+                              )}
                             </div>
 
                             <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -431,23 +588,53 @@ export default function FloatingChat() {
 
                 {/* Message Input */}
                 <div className="p-3 border-t">
-                  <form onSubmit={sendMessage} className="flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="اكتب رسالتك..."
-                      disabled={isSending}
-                      className="flex-1 h-8 text-xs"
-                      maxLength={500}
-                    />
-                    <Button type="submit" disabled={!newMessage.trim() || isSending} size="sm" className="h-8 w-8 p-0">
-                      {isSending ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                      ) : (
-                        <Send className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </form>
+                  {isRecording ? (
+                    <div className="flex items-center justify-center gap-2 py-1">
+                      <div className="flex items-center gap-1">
+                        <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-xs">{formatRecordingTime(recordingTime)}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={stopRecording}
+                        disabled={isSending}
+                      >
+                        <Square className="h-3 w-3 ml-1" />
+                        إرسال
+                      </Button>
+                    </div>
+                  ) : (
+                    <form onSubmit={sendMessage} className="flex gap-1">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="اكتب رسالتك..."
+                        disabled={isSending}
+                        className="flex-1 h-8 text-xs"
+                        maxLength={500}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={startRecording}
+                        disabled={isSending}
+                      >
+                        <Mic className="h-3 w-3" />
+                      </Button>
+                      <Button type="submit" disabled={!newMessage.trim() || isSending} size="sm" className="h-8 w-8 p-0">
+                        {isSending ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                        ) : (
+                          <Send className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </form>
+                  )}
                 </div>
               </CardContent>
             )}
