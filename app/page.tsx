@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -27,9 +28,9 @@ import { PricingSection } from "@/components/pricing-section"
 
 const MotionLink = motion(Link)
 
-// Particle Animation Component  
+// Particle Animation Component
 const Particles = () => {
-  const particleCount = 20
+  const particleCount = 10
   const colors = ["rgba(8, 42, 69, 0.2)", "rgba(199, 216, 51, 0.2)"]
 
   return (
@@ -301,20 +302,14 @@ export default function Home() {
             {/* Background image with multiple overlay layers */}
             <div className="absolute inset-0 overflow-hidden">
               {/* Base image with reduced brightness */}
-              <motion.img
+              <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/markus-spiske-97Rpu-UmCaY-unsplash.jpg-3KFMHqVOnYu9bOCowifl5ujEHdVZ2K.jpeg"
-                alt="Background"
-                className="w-full h-full object-cover object-center filter brightness-75"
-                initial={{ scale: 1.1 }}
-                animate={{
-                  scale: [1.1, 1.15, 1.1],
-                  filter: ["brightness(0.75)", "brightness(0.65)", "brightness(0.75)"],
-                }}
-                transition={{
-                  duration: 20,
-                  repeat: Number.POSITIVE_INFINITY,
-                  repeatType: "reverse",
-                }}
+                alt="خلفية مجتمع الدعم التربوي"
+                fill
+                priority
+                quality={75}
+                className="object-cover object-center filter brightness-75"
+                sizes="100vw"
               />
 
               {/* Solid color overlay */}
@@ -426,10 +421,12 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="transition-transform hover:scale-105"
                 >
-                  <img
+                  <Image
                     src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                    alt="Get it on Google Play"
-                    className="h-12"
+                    alt="حمل من Google Play"
+                    width={135}
+                    height={40}
+                    className="h-12 w-auto"
                   />
                 </a>
                 <a
@@ -438,10 +435,12 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="transition-transform hover:scale-105"
                 >
-                  <img
+                  <Image
                     src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                    alt="Download on the App Store"
-                    className="h-12"
+                    alt="حمل من App Store"
+                    width={120}
+                    height={40}
+                    className="h-12 w-auto"
                   />
                 </a>
               </div>
@@ -665,12 +664,12 @@ export default function Home() {
                       whileHover={{ opacity: 1, scale: 0.98 }}
                       transition={{ duration: 0.4 }}
                     />
-                    <motion.img
+                    <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Copy-of-Untitled12-768x768-VLaV6PrIRYWgvGutdX5bFV7mz2ym8A.webp"
-                      alt="سما العزاوي"
-                      className="w-full h-full object-cover object-center"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.5 }}
+                      alt="سما العزاوي - خبيرة في تربية الأطفال"
+                      fill
+                      className="object-cover object-center transition-transform duration-500 hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 256px"
                     />
                   </div>
 
@@ -788,10 +787,12 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="transition-transform hover:scale-105"
                   >
-                    <img
+                    <Image
                       src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                      alt="Get it on Google Play"
-                      className="h-12"
+                      alt="حمل من Google Play"
+                      width={135}
+                      height={40}
+                      className="h-12 w-auto"
                     />
                   </a>
                   <a
@@ -800,10 +801,12 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="transition-transform hover:scale-105"
                   >
-                    <img
+                    <Image
                       src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                      alt="Download on the App Store"
-                      className="h-12"
+                      alt="حمل من App Store"
+                      width={120}
+                      height={40}
+                      className="h-12 w-auto"
                     />
                   </a>
                 </div>
