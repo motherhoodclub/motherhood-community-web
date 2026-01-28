@@ -127,7 +127,7 @@ const ServiceCard = ({ title, icon: Icon, color, description }) => {
           animate={{ opacity: 1 }}
           className="mt-4 text-primary font-medium flex items-center"
         >
-          <span>تعرفي على المزيد</span>
+          <span>تعرف على المزيد</span>
           <ArrowRight className="mr-2 h-4 w-4" />
         </motion.div>
       )}
@@ -432,7 +432,7 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
               <div className="text-center md:text-right text-white">
-                <h3 className="text-2xl font-bold mb-2">حمّلي التطبيق الآن</h3>
+                <h3 className="text-2xl font-bold mb-2">حمّل التطبيق الآن</h3>
                 <p className="text-white/80">متوفر على جميع الأجهزة</p>
               </div>
               <div className="flex flex-row gap-4">
@@ -535,7 +535,7 @@ export default function Home() {
                 title="مكتبة تعليمية"
                 icon={Book}
                 color="bg-secondary/5"
-                description="استفيدي من مجموعة واسعة من المقالات والفيديوهات التعليمية"
+                description="استفد من مجموعة واسعة من المقالات والفيديوهات التعليمية"
               />
               <ServiceCard
                 title="متابعة صحية"
@@ -757,13 +757,13 @@ export default function Home() {
               viewport={{ once: true }}
             >
               <Badge className="mb-6 px-4 py-2 bg-white/20 text-white rounded-full backdrop-blur-sm">
-                انضمي إلينا اليوم
+                انضم إلينا اليوم
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white leading-tight">
-                ابدأي رحلتك في التربية الإيجابية
+                ابدأ رحلتك في التربية الإيجابية
               </h2>
               <p className="text-xl text-white/80 mb-10 leading-relaxed">
-                انضمي إلى آلاف الأمهات اللواتي وجدن الدعم والمعرفة في مجتمعنا. نحن هنا لمساعدتك في كل خطوة.
+                انضم إلى آلاف الآباء والأمهات الذين وجدوا الدعم والمعرفة في مجتمعنا. نحن هنا لمساعدتك في كل خطوة.
               </p>
 
               {/* CTA Buttons */}
@@ -774,25 +774,15 @@ export default function Home() {
                   asChild
                 >
                   <Link href="https://community.motherhoodclub.net/auth/register">
-                    <span>سجلي الآن مجاناً</span>
+                    <span>سجل الآن</span>
                     <ArrowRight className="mr-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white text-white bg-transparent hover:bg-white/10 text-lg px-10 py-6 transition-all duration-300"
-                  asChild
-                >
-                  <Link href="/community/subscription">
-                    <span>تعرفي على الباقات</span>
                   </Link>
                 </Button>
               </div>
 
               {/* App Download */}
               <div className="pt-8 border-t border-white/20">
-                <p className="text-white/70 mb-6">أو حمّلي التطبيق على جوالك</p>
+                <p className="text-white/70 mb-6">أو حمّل التطبيق على جوالك</p>
                 <div className="flex flex-row justify-center gap-4">
                   <a
                     href="https://play.google.com/store/apps/details?id=com.mmayman1009.motherhoodclubappqy4uoy10&hl=en"
