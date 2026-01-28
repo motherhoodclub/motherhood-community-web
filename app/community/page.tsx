@@ -43,6 +43,7 @@ export default function CommunityPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(initialCategory)
   const [likedTopics, setLikedTopics] = useState({})
   const [bookmarkedTopics, setBookmarkedTopics] = useState({})
@@ -86,14 +87,24 @@ export default function CommunityPage() {
     setCurrentPage(1)
   }, [selectedCategory, activeTab])
 
-  // Add a new useEffect to refetch topics when selectedCategory, activeTab, or currentPage changes
+  // Debounce search query to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setCurrentPage(1) // Reset to page 1 when search changes
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Add a new useEffect to refetch topics when selectedCategory, activeTab, currentPage, or search changes
   useEffect(() => {
     if (selectedCategory === "أسئلة") {
       fetchQuestions()
     } else {
       fetchTopics()
     }
-  }, [selectedCategory, activeTab, currentPage])
+  }, [selectedCategory, activeTab, currentPage, debouncedSearchQuery])
 
   const fetchTopics = async () => {
     setIsLoading(true)
@@ -104,6 +115,11 @@ export default function CommunityPage() {
 
       if (selectedCategory !== "all" && selectedCategory !== "أسئلة") {
         countQuery = countQuery.eq("sorting", selectedCategory)
+      }
+
+      // Add search filter to count query
+      if (debouncedSearchQuery.trim()) {
+        countQuery = countQuery.ilike("title", `%${debouncedSearchQuery}%`)
       }
 
       const { count, error: countError } = await countQuery
@@ -128,6 +144,11 @@ export default function CommunityPage() {
 
       if (selectedCategory !== "all" && selectedCategory !== "أسئلة") {
         query = query.eq("sorting", selectedCategory)
+      }
+
+      // Add search filter to data query
+      if (debouncedSearchQuery.trim()) {
+        query = query.ilike("title", `%${debouncedSearchQuery}%`)
       }
 
       const { data: topicsData, error } = await query
@@ -192,7 +213,14 @@ export default function CommunityPage() {
     setError(null)
     try {
       // First, get the count of all questions
-      const { count, error: countError } = await supabase.from("questions").select("id", { count: "exact" })
+      let countQuery = supabase.from("questions").select("id", { count: "exact" })
+
+      // Add search filter to count query
+      if (debouncedSearchQuery.trim()) {
+        countQuery = countQuery.ilike("title", `%${debouncedSearchQuery}%`)
+      }
+
+      const { count, error: countError } = await countQuery
 
       if (countError) throw countError
 
@@ -210,6 +238,11 @@ export default function CommunityPage() {
         query = query.order("created_at", { ascending: false })
       } else if (activeTab === "popular") {
         query = query.order("likes", { ascending: false })
+      }
+
+      // Add search filter to data query
+      if (debouncedSearchQuery.trim()) {
+        query = query.ilike("title", `%${debouncedSearchQuery}%`)
       }
 
       const { data: questionsData, error } = await query
@@ -426,11 +459,8 @@ export default function CommunityPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // Filter topics or questions based on search query
-  const filteredItems =
-    selectedCategory === "أسئلة"
-      ? questions.filter((q) => q.title.toLowerCase().includes(searchQuery.toLowerCase()))
-      : topics.filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Get items based on selected category (filtering is now done in the database)
+  const filteredItems = selectedCategory === "أسئلة" ? questions : topics
 
   // Animation variants
   const containerVariants = {

@@ -584,7 +584,7 @@ export default function QuestionDetailPage({ params }) {
             <span className="text-muted-foreground/50">•</span>
             <span className="flex items-center">
               <Clock className="ml-1 h-3.5 w-3.5" />
-              {new Date(question.created_at).toLocaleDateString("ar-SA")}
+              {new Date(question.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
             </span>
           </div>
         </CardHeader>
@@ -651,7 +651,7 @@ export default function QuestionDetailPage({ params }) {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{reply.user_profile?.username || "مستخدم"}</span>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(reply.created_at).toLocaleDateString("ar-SA")}
+                              {new Date(reply.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                             </span>
                           </div>
                           <div className="flex items-center">
@@ -761,7 +761,7 @@ export default function QuestionDetailPage({ params }) {
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{childReply.user_profile?.username || "مستخدم"}</span>
                               <span className="text-xs text-muted-foreground">
-                                {new Date(childReply.created_at).toLocaleDateString("ar-SA")}
+                                {new Date(childReply.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                               </span>
                             </div>
                             {canEditReply(childReply) && (

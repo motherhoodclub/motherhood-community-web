@@ -51,7 +51,7 @@ export function WorkshopManagement() {
           {workshops.map((workshop) => (
             <TableRow key={workshop.id}>
               <TableCell>{workshop.title}</TableCell>
-              <TableCell>{new Date(workshop.date).toLocaleDateString("ar-SA")}</TableCell>
+              <TableCell>{new Date(workshop.date).toLocaleDateString("ar-SA-u-ca-gregory")}</TableCell>
               <TableCell>{workshop.speaker}</TableCell>
               <TableCell>
                 <Button variant="outline" size="sm">

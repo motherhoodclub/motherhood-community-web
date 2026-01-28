@@ -67,8 +67,8 @@ export async function POST(request: Request) {
       const subscriptionDetails = subscriptionData
         ? {
             plan: planType,
-            startDate: new Date(subscriptionData.created_at).toLocaleDateString("ar-SA"),
-            endDate: endDate || new Date(subscriptionData.end_date).toLocaleDateString("ar-SA"),
+            startDate: new Date(subscriptionData.created_at).toLocaleDateString("ar-SA-u-ca-gregory"),
+            endDate: endDate || new Date(subscriptionData.end_date).toLocaleDateString("ar-SA-u-ca-gregory"),
             amount: subscriptionData.amount || "غير متوفر",
             status: subscriptionData.status || "نشط",
             isRecurring: isRecurring ? "اشتراك متجدد" : "دفعة لمرة واحدة",

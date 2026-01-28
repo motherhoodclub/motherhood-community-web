@@ -120,8 +120,8 @@ export default function TopicCard({ topic }: TopicCardProps) {
                 </Avatar>
                 <span className="font-medium">{topic.author_name || "مستخدم"}</span>
                 <span className="text-muted-foreground/50">•</span>
-                <span title={new Date(topic.created_at).toLocaleString("ar-SA")}>
-                  {new Date(topic.created_at).toLocaleDateString("ar-SA")}
+                <span title={new Date(topic.created_at).toLocaleString("ar-SA-u-ca-gregory")}>
+                  {new Date(topic.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                 </span>
               </div>
               <div className="flex items-center gap-4">

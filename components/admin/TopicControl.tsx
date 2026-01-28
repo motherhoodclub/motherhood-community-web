@@ -82,7 +82,7 @@ export function TopicControl() {
             <TableRow key={topic.id}>
               <TableCell>{topic.title}</TableCell>
               <TableCell>{topic.user_profiles.username}</TableCell>
-              <TableCell>{new Date(topic.created_at).toLocaleDateString("ar-SA")}</TableCell>
+              <TableCell>{new Date(topic.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}</TableCell>
               <TableCell>
                 <Switch
                   checked={topic.is_pinned}

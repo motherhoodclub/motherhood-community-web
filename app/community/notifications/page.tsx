@@ -293,7 +293,7 @@ export default function NotificationsPage() {
     } else if (diffDays < 7) {
       return `منذ ${diffDays} أيام`
     } else {
-      return date.toLocaleDateString("ar-SA")
+      return date.toLocaleDateString("ar-SA-u-ca-gregory")
     }
   }
 

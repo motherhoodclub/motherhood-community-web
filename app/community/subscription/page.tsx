@@ -122,7 +122,7 @@ export default function SubscriptionPage() {
                       userEmail: profile?.email || user.email,
                       username: profile?.username || "عضو",
                       planType: subData.plan_type === "yearly" ? "اشتراك سنوي" : "اشتراك شهري",
-                      endDate: new Date(subData.current_period_end).toLocaleDateString("ar-SA"),
+                      endDate: new Date(subData.current_period_end).toLocaleDateString("ar-SA-u-ca-gregory"),
                       isRecurring: !subData.cancel_at_period_end,
                       notificationId: notificationId,
                     }),
@@ -337,7 +337,7 @@ export default function SubscriptionPage() {
   const formatDate = (dateString) => {
     if (!dateString) return ""
     const date = new Date(dateString)
-    return date.toLocaleDateString("ar-SA", {
+    return date.toLocaleDateString("ar-SA-u-ca-gregory", {
       year: "numeric",
       month: "long",
       day: "numeric",

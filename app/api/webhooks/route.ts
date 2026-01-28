@@ -133,7 +133,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
         // Send subscription notification emails
         try {
-          const endDate = new Date(subscription.current_period_end * 1000).toLocaleDateString("ar-SA")
+          const endDate = new Date(subscription.current_period_end * 1000).toLocaleDateString("ar-SA-u-ca-gregory")
 
           await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/subscription`, {
             method: "POST",

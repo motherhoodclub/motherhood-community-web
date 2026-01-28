@@ -90,7 +90,7 @@ export default function ActivityPage() {
                       {topic.title}
                     </Link>
                     <span className="text-gray-500 text-sm mr-2">
-                      {new Date(topic.created_at).toLocaleString("ar-SA")}
+                      {new Date(topic.created_at).toLocaleString("ar-SA-u-ca-gregory")}
                     </span>
                   </li>
                 ))}
@@ -114,7 +114,7 @@ export default function ActivityPage() {
                       {comment.content.substring(0, 50)}...
                     </Link>
                     <span className="text-gray-500 text-sm mr-2">
-                      على موضوع: {comment.topics.title} • {new Date(comment.created_at).toLocaleString("ar-SA")}
+                      على موضوع: {comment.topics.title} • {new Date(comment.created_at).toLocaleString("ar-SA-u-ca-gregory")}
                     </span>
                   </li>
                 ))}
@@ -138,7 +138,7 @@ export default function ActivityPage() {
                       {like.topics.title}
                     </Link>
                     <span className="text-gray-500 text-sm mr-2">
-                      {new Date(like.created_at).toLocaleString("ar-SA")}
+                      {new Date(like.created_at).toLocaleString("ar-SA-u-ca-gregory")}
                     </span>
                   </li>
                 ))}

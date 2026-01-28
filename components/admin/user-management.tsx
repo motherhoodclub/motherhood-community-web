@@ -52,7 +52,7 @@ export function UserManagement() {
             <TableRow key={user.id}>
               <TableCell>{user.username}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleDateString("ar-SA")}</TableCell>
+              <TableCell>{new Date(user.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}</TableCell>
               <TableCell>
                 <Button variant="outline" size="sm">
                   تعديل

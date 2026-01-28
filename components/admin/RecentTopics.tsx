@@ -51,7 +51,7 @@ export function RecentTopics() {
             </p>
           </div>
           <div className="mr-auto text-sm text-muted-foreground">
-            {new Date(topic.created_at).toLocaleDateString("ar-SA")}
+            {new Date(topic.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
           </div>
         </div>
       ))}

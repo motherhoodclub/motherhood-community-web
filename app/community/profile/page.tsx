@@ -364,7 +364,7 @@ export default function ProfilePage() {
                         <li key={topic.id} className="border-b pb-2 text-right">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
-                              {new Date(topic.created_at).toLocaleDateString("ar-SA")}
+                              {new Date(topic.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                             </span>
                             <a href={`/community/topic/${topic.id}`} className="text-primary hover:underline">
                               {topic.title}
@@ -388,7 +388,7 @@ export default function ProfilePage() {
                         <li key={comment.id} className="border-b pb-2 text-right">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
-                              {new Date(comment.created_at).toLocaleDateString("ar-SA")}
+                              {new Date(comment.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                             </span>
                             <a href={`/community/topic/${comment.topic_id}`} className="text-primary hover:underline">
                               {comment.topics?.title || "موضوع محذوف"}
@@ -412,7 +412,7 @@ export default function ProfilePage() {
                         <li key={index} className="border-b pb-2 text-right">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
-                              {new Date(like.created_at).toLocaleDateString("ar-SA")}
+                              {new Date(like.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                             </span>
                             <a href={`/community/topic/${like.topic_id}`} className="text-primary hover:underline">
                               {like.topics?.title || "موضوع محذوف"}
@@ -435,7 +435,7 @@ export default function ProfilePage() {
                         <li key={index} className="border-b pb-2 text-right">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
-                              {new Date(bookmark.created_at).toLocaleDateString("ar-SA")}
+                              {new Date(bookmark.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                             </span>
                             <a href={`/community/topic/${bookmark.topic_id}`} className="text-primary hover:underline">
                               {bookmark.topics?.title || "موضوع محذوف"}

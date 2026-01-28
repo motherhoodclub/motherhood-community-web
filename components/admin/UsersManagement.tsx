@@ -55,7 +55,7 @@ export function UsersManagement() {
             <TableRow key={user.id}>
               <TableCell>{user.username}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleDateString("ar-SA")}</TableCell>
+              <TableCell>{new Date(user.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}</TableCell>
               <TableCell>{user.is_admin ? "نعم" : "لا"}</TableCell>
               <TableCell>
                 <Button onClick={() => toggleAdminStatus(user.id, user.is_admin)}>

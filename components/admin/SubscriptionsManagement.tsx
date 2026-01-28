@@ -520,7 +520,7 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "غير محدد"
-    return new Date(dateString).toLocaleDateString("ar-SA", {
+    return new Date(dateString).toLocaleDateString("ar-SA-u-ca-gregory", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -1121,7 +1121,7 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                           <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">تاريخ الإنشاء</h4>
                           <p className="text-sm font-medium mt-1">
                             {userDetails.auth.createdAt
-                              ? new Date(userDetails.auth.createdAt).toLocaleString("ar-SA")
+                              ? new Date(userDetails.auth.createdAt).toLocaleString("ar-SA-u-ca-gregory")
                               : "غير محدد"}
                           </p>
                         </div>
@@ -1129,7 +1129,7 @@ export function SubscriptionsManagement({ subscriptions: initialSubscriptions }:
                           <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">آخر تسجيل دخول</h4>
                           <p className="text-sm font-medium mt-1">
                             {userDetails.auth.lastSignIn
-                              ? new Date(userDetails.auth.lastSignIn).toLocaleString("ar-SA")
+                              ? new Date(userDetails.auth.lastSignIn).toLocaleString("ar-SA-u-ca-gregory")
                               : "غير محدد"}
                           </p>
                         </div>

@@ -49,7 +49,7 @@ export function RecentUsers() {
             </TableCell>
             <TableCell className="font-medium">{user.full_name}</TableCell>
             <TableCell>{user.email}</TableCell>
-            <TableCell className="text-left">{new Date(user.created_at).toLocaleDateString("ar-SA")}</TableCell>
+            <TableCell className="text-left">{new Date(user.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}</TableCell>
           </TableRow>
         ))}
       </TableBody>

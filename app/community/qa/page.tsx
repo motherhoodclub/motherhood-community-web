@@ -46,7 +46,7 @@ export default function QAPage() {
                 <p className="mb-4">{topic.content.substring(0, 100)}...</p>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">
-                    بواسطة {topic.user_profiles.username} • {new Date(topic.created_at).toLocaleDateString("ar-SA")}
+                    بواسطة {topic.user_profiles.username} • {new Date(topic.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
                   </span>
                   <span className="text-sm text-gray-500">{topic.qa_answers.count} إجابة</span>
                 </div>

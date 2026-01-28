@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
   const formatDate = (dateString) => {
     if (!dateString) return "غير متوفر"
     try {
-      return new Date(dateString).toLocaleDateString("ar-SA", {
+      return new Date(dateString).toLocaleDateString("ar-SA-u-ca-gregory", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
   const formatDateTime = (dateString) => {
     if (!dateString) return "غير متوفر"
     try {
-      return new Date(dateString).toLocaleString("ar-SA", {
+      return new Date(dateString).toLocaleString("ar-SA-u-ca-gregory", {
         year: "numeric",
         month: "short",
         day: "numeric",
