@@ -15,7 +15,11 @@ const almarai = Almarai({
 export const metadata = {
   title: "مجتمع الدعم التربوي",
   description: "منصة متكاملة لدعم الأمهات في رحلة الأمومة",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
