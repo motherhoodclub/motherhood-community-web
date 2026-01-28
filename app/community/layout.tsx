@@ -42,6 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/components/auth/use-session"
 import { formatArabicDate } from "@/lib/date-utils"
 import FloatingChat from "@/components/floating-chat"
+import { Smartphone, X } from "lucide-react"
 
 const categories = [
   { name: "الحمل والولادة", icon: "🤰" },
@@ -73,6 +74,7 @@ export default function CommunityLayout({
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [downloadableFiles, setDownloadableFiles] = useState([])
+  const [showAppBanner, setShowAppBanner] = useState(true)
 
   useEffect(() => {
     const getUser = async () => {
@@ -400,6 +402,41 @@ export default function CommunityLayout({
         isDarkMode ? "dark bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-900",
       )}
     >
+      {/* App Promotion Banner */}
+      {showAppBanner && (
+        <div className="bg-gradient-to-r from-primary to-primary/90 text-white py-1.5 px-4 relative">
+          <div className="container mx-auto flex items-center justify-center gap-3 text-xs sm:text-sm">
+            <Smartphone className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="truncate">حمّل التطبيق الآن!</span>
+            <div className="flex items-center gap-2">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.mmayman1009.motherhoodclubappqy4uoy10&hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-xs transition-colors"
+              >
+                Android
+              </a>
+              <a
+                href="https://apps.apple.com/in/app/motherhoodclub-community/id6749237917?platform=vision"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-xs transition-colors"
+              >
+                iOS
+              </a>
+            </div>
+            <button
+              onClick={() => setShowAppBanner(false)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/20 rounded transition-colors"
+              aria-label="إغلاق"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation */}
       <header
         className={cn(
