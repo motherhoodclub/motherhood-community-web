@@ -69,7 +69,7 @@ export default function CommunityLayout({
   const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
-  const session = useSession()
+  const { session } = useSession()
   const [popularTopics, setPopularTopics] = useState([])
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)

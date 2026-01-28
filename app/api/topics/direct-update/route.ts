@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 
 // Create a Supabase client with the service role key
@@ -9,6 +11,27 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify user is authenticated and is an admin
+    const supabase = createRouteHandlerClient({ cookies })
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Check if user is admin
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError || !profile?.is_admin) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    }
+
     // Get request body
     const requestData = await request.json()
     const {

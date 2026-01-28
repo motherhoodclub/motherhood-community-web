@@ -30,7 +30,9 @@ export async function GET(request: Request) {
   }
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+    // Escape special characters to prevent injection
+    const escapedSearch = search.replace(/[%_]/g, "\\$&")
+    query = query.or(`title.ilike.%${escapedSearch}%,content.ilike.%${escapedSearch}%`)
   }
 
   const { data: topics, error, count } = await query
@@ -60,11 +62,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data[0])
-
-  // Send notification for new topic
+  // Send notification for new topic (non-blocking)
   try {
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/new-topic`, {
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/new-topic`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -74,9 +74,12 @@ export async function POST(request: Request) {
         title: data[0].title,
         authorId: user.id,
       }),
+    }).catch((notificationError) => {
+      console.error("Error sending new topic notification:", notificationError)
     })
   } catch (notificationError) {
     console.error("Error sending new topic notification:", notificationError)
-    // Continue with the response even if notification fails
   }
+
+  return NextResponse.json(data[0])
 }
