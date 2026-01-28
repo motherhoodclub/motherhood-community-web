@@ -35,13 +35,22 @@ export async function POST(request: Request) {
     let priceId: string
     if (isRecurring) {
       // Recurring subscription
-      priceId = planType === "yearly" ? process.env.STRIPE_YEARLY_PRICE_ID! : process.env.STRIPE_MONTHLY_PRICE_ID!
+      if (planType === "yearly") {
+        priceId = process.env.STRIPE_YEARLY_PRICE_ID!
+      } else if (planType === "semi-annual") {
+        priceId = process.env.STRIPE_SEMI_ANNUAL_PRICE_ID!
+      } else {
+        priceId = process.env.STRIPE_MONTHLY_PRICE_ID!
+      }
     } else {
       // One-time payment
-      priceId =
-        planType === "yearly"
-          ? process.env.STRIPE_YEARLY_ONETIME_PRICE_ID!
-          : process.env.STRIPE_MONTHLY_ONETIME_PRICE_ID!
+      if (planType === "yearly") {
+        priceId = process.env.STRIPE_YEARLY_ONETIME_PRICE_ID!
+      } else if (planType === "semi-annual") {
+        priceId = process.env.STRIPE_SEMI_ANNUAL_ONETIME_PRICE_ID!
+      } else {
+        priceId = process.env.STRIPE_MONTHLY_ONETIME_PRICE_ID!
+      }
     }
 
     if (!priceId) {

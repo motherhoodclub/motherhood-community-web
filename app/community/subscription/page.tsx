@@ -24,7 +24,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function SubscriptionPage() {
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("monthly")
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "semi-annual" | "yearly">("monthly")
   const [isRecurring, setIsRecurring] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false)
@@ -121,7 +121,7 @@ export default function SubscriptionPage() {
                       userId: user.id,
                       userEmail: profile?.email || user.email,
                       username: profile?.username || "عضو",
-                      planType: subData.plan_type === "yearly" ? "اشتراك سنوي" : "اشتراك شهري",
+                      planType: subData.plan_type === "yearly" ? "اشتراك سنوي" : subData.plan_type === "semi-annual" ? "اشتراك نصف سنوي" : "اشتراك شهري",
                       endDate: new Date(subData.current_period_end).toLocaleDateString("ar-SA-u-ca-gregory"),
                       isRecurring: !subData.cancel_at_period_end,
                       notificationId: notificationId,
@@ -351,6 +351,14 @@ export default function SubscriptionPage() {
     "الوصول إلى المحتوى الحصري",
   ]
 
+  const semiAnnualFeatures = [
+    "الوصول إلى جميع المناقشات والمواضيع",
+    "المشاركة في المنتديات والمجموعات",
+    "حضور ورش العمل والفعاليات",
+    "الوصول إلى المحتوى الحصري",
+    "استشارة تربوية مجانية",
+  ]
+
   const yearlyFeatures = [
     "الوصول إلى جميع المناقشات والمواضيع",
     "المشاركة في المنتديات والمجموعات",
@@ -426,7 +434,7 @@ export default function SubscriptionPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">نوع الاشتراك</h3>
-                  <p className="font-medium">{subscription?.plan_type === "yearly" ? "اشتراك سنوي" : "اشتراك شهري"}</p>
+                  <p className="font-medium">{subscription?.plan_type === "yearly" ? "اشتراك سنوي" : subscription?.plan_type === "semi-annual" ? "اشتراك نصف سنوي" : "اشتراك شهري"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">الحالة</h3>
@@ -531,17 +539,18 @@ export default function SubscriptionPage() {
               <Tabs
                 defaultValue="monthly"
                 value={selectedPlan}
-                onValueChange={(value) => setSelectedPlan(value as "monthly" | "yearly")}
-                className="w-full max-w-md"
+                onValueChange={(value) => setSelectedPlan(value as "monthly" | "semi-annual" | "yearly")}
+                className="w-full max-w-lg"
               >
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="monthly">شهري</TabsTrigger>
+                  <TabsTrigger value="semi-annual">6 أشهر</TabsTrigger>
                   <TabsTrigger value="yearly">سنوي</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className={selectedPlan === "monthly" ? "border-primary" : ""}>
                 <CardHeader>
                   <CardTitle className="flex justify-between items-center">
@@ -582,6 +591,51 @@ export default function SubscriptionPage() {
                 </CardFooter>
               </Card>
 
+              <Card className={selectedPlan === "semi-annual" ? "border-primary" : ""}>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex justify-between items-center">
+                      <span>اشتراك 6 أشهر</span>
+                      {selectedPlan === "semi-annual" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
+                    </CardTitle>
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                      وفري 17%
+                    </Badge>
+                  </div>
+                  <CardDescription>اشتراك نصف سنوي بسعر مخفض</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-3xl font-bold">
+                    $165 <span className="text-muted-foreground text-sm font-normal">/ 6 أشهر</span>
+                  </div>
+
+                  <ul className="space-y-2">
+                    {semiAnnualFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <Check className="ml-2 h-4 w-4 text-green-500" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="flex items-center space-x-2 space-x-reverse pt-4">
+                    <Switch id="recurring-toggle-semi" checked={isRecurring} onCheckedChange={setIsRecurring} />
+                    <Label htmlFor="recurring-toggle-semi">تجديد تلقائي للاشتراك</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {isRecurring ? "سيتم تجديد اشتراكك تلقائياً كل 6 أشهر" : "اشتراك لمرة واحدة فقط لمدة 6 أشهر"}
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={() => handleCheckout("semi-annual")} disabled={isCreatingCheckout} className="w-full">
+                    {isCreatingCheckout && selectedPlan === "semi-annual" && (
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    )}
+                    اشتركي الآن
+                  </Button>
+                </CardFooter>
+              </Card>
+
               <Card className={selectedPlan === "yearly" ? "border-primary" : ""}>
                 <CardHeader>
                   <div className="flex justify-between items-center">
@@ -590,7 +644,7 @@ export default function SubscriptionPage() {
                       {selectedPlan === "yearly" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
                     </CardTitle>
                     <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                      وفري 24%
+                      وفري 37%
                     </Badge>
                   </div>
                   <CardDescription>اشتراك سنوي بسعر مخفض</CardDescription>
