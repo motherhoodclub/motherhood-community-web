@@ -404,26 +404,33 @@ export default function CommunityLayout({
     >
       {/* App Promotion Banner */}
       {showAppBanner && (
-        <div className="bg-gradient-to-r from-primary to-primary/90 text-white py-1.5 px-4 relative">
+        <div className="bg-gradient-to-r from-primary to-primary/90 text-white py-1 px-4 relative">
           <div className="container mx-auto flex items-center justify-center gap-3 text-xs sm:text-sm">
-            <Smartphone className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="truncate">حمّل التطبيق الآن!</span>
+            <span className="truncate">حمّل التطبيق!</span>
             <div className="flex items-center gap-2">
               <a
                 href="https://play.google.com/store/apps/details?id=com.mmayman1009.motherhoodclubappqy4uoy10&hl=en"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-xs transition-colors"
+                className="transition-transform hover:scale-105"
               >
-                Android
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                  alt="Google Play"
+                  className="h-6"
+                />
               </a>
               <a
                 href="https://apps.apple.com/in/app/motherhoodclub-community/id6749237917?platform=vision"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-xs transition-colors"
+                className="transition-transform hover:scale-105"
               >
-                iOS
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+                  alt="App Store"
+                  className="h-6"
+                />
               </a>
             </div>
             <button
