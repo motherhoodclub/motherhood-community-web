@@ -427,6 +427,44 @@ export default function Home() {
           {/* <WaveDivider className="bottom-0" flip={true} color="text-white" /> */}
         </section>
 
+        {/* App Download Section */}
+        <section className="py-12 bg-gradient-to-r from-primary to-primary/90 relative overflow-hidden">
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
+              <div className="text-center md:text-right text-white">
+                <h3 className="text-2xl font-bold mb-2">حمّلي التطبيق الآن</h3>
+                <p className="text-white/80">متوفر على جميع الأجهزة</p>
+              </div>
+              <div className="flex flex-row gap-4">
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.mmayman1009.motherhoodclubappqy4uoy10&hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-transform hover:scale-105"
+                >
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                    alt="Get it on Google Play"
+                    className="h-14"
+                  />
+                </a>
+                <a
+                  href="https://apps.apple.com/in/app/motherhoodclub-community/id6749237917?platform=vision"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-transform hover:scale-105"
+                >
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+                    alt="Download on the App Store"
+                    className="h-14"
+                  />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Features Section - NEW */}
         <section className="py-20 bg-white relative">
           <div className="container mx-auto px-4">
