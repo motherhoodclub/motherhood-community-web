@@ -117,9 +117,9 @@ export default function CommunityPage() {
         countQuery = countQuery.eq("sorting", selectedCategory)
       }
 
-      // Add search filter to count query
+      // Add search filter to count query (search in title OR content)
       if (debouncedSearchQuery.trim()) {
-        countQuery = countQuery.ilike("title", `%${debouncedSearchQuery}%`)
+        countQuery = countQuery.or(`title.ilike.%${debouncedSearchQuery}%,content.ilike.%${debouncedSearchQuery}%`)
       }
 
       const { count, error: countError } = await countQuery
@@ -146,9 +146,9 @@ export default function CommunityPage() {
         query = query.eq("sorting", selectedCategory)
       }
 
-      // Add search filter to data query
+      // Add search filter to data query (search in title OR content)
       if (debouncedSearchQuery.trim()) {
-        query = query.ilike("title", `%${debouncedSearchQuery}%`)
+        query = query.or(`title.ilike.%${debouncedSearchQuery}%,content.ilike.%${debouncedSearchQuery}%`)
       }
 
       const { data: topicsData, error } = await query
@@ -215,9 +215,9 @@ export default function CommunityPage() {
       // First, get the count of all questions
       let countQuery = supabase.from("questions").select("id", { count: "exact" })
 
-      // Add search filter to count query
+      // Add search filter to count query (search in title OR content)
       if (debouncedSearchQuery.trim()) {
-        countQuery = countQuery.ilike("title", `%${debouncedSearchQuery}%`)
+        countQuery = countQuery.or(`title.ilike.%${debouncedSearchQuery}%,content.ilike.%${debouncedSearchQuery}%`)
       }
 
       const { count, error: countError } = await countQuery
@@ -240,9 +240,9 @@ export default function CommunityPage() {
         query = query.order("likes", { ascending: false })
       }
 
-      // Add search filter to data query
+      // Add search filter to data query (search in title OR content)
       if (debouncedSearchQuery.trim()) {
-        query = query.ilike("title", `%${debouncedSearchQuery}%`)
+        query = query.or(`title.ilike.%${debouncedSearchQuery}%,content.ilike.%${debouncedSearchQuery}%`)
       }
 
       const { data: questionsData, error } = await query
@@ -518,7 +518,7 @@ export default function CommunityPage() {
         <div className="relative flex-1">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="ابحث في المواضيع..."
+            placeholder="ابحث في العناوين والمحتوى..."
             className="pr-10 text-sm sm:text-base"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
