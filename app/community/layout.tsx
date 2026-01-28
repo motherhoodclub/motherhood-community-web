@@ -404,10 +404,10 @@ export default function CommunityLayout({
     >
       {/* App Promotion Banner */}
       {showAppBanner && (
-        <div className="bg-gradient-to-r from-primary to-primary/90 text-white py-1 px-4 relative">
-          <div className="container mx-auto flex items-center justify-center gap-3 text-xs sm:text-sm">
-            <span className="truncate">حمّل التطبيق!</span>
-            <div className="flex items-center gap-2">
+        <div className="bg-gradient-to-r from-primary to-primary/90 text-white py-2 sm:py-2.5 px-4 relative">
+          <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm">
+            <span className="font-medium">حمّل التطبيق الآن!</span>
+            <div className="flex items-center gap-3">
               <a
                 href="https://play.google.com/store/apps/details?id=com.mmayman1009.motherhoodclubappqy4uoy10&hl=en"
                 target="_blank"
@@ -417,7 +417,7 @@ export default function CommunityLayout({
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
                   alt="Google Play"
-                  className="h-6"
+                  className="h-8 sm:h-9"
                 />
               </a>
               <a
@@ -429,16 +429,16 @@ export default function CommunityLayout({
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
                   alt="App Store"
-                  className="h-6"
+                  className="h-8 sm:h-9"
                 />
               </a>
             </div>
             <button
               onClick={() => setShowAppBanner(false)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/20 rounded transition-colors"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/20 rounded-full transition-colors"
               aria-label="إغلاق"
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
