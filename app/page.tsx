@@ -739,6 +739,90 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        {/* CTA Section */}
+        <section className="py-20 bg-gradient-to-br from-primary via-primary/95 to-primary relative overflow-hidden">
+          {/* Background decorations */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-40 h-40 bg-secondary rounded-full blur-3xl" />
+            <div className="absolute bottom-10 right-10 w-60 h-60 bg-secondary rounded-full blur-3xl" />
+          </div>
+
+          <div className="container mx-auto px-4 relative z-10">
+            <motion.div
+              className="text-center max-w-3xl mx-auto"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              viewport={{ once: true }}
+            >
+              <Badge className="mb-6 px-4 py-2 bg-white/20 text-white rounded-full backdrop-blur-sm">
+                انضمي إلينا اليوم
+              </Badge>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white leading-tight">
+                ابدأي رحلتك في التربية الإيجابية
+              </h2>
+              <p className="text-xl text-white/80 mb-10 leading-relaxed">
+                انضمي إلى آلاف الأمهات اللواتي وجدن الدعم والمعرفة في مجتمعنا. نحن هنا لمساعدتك في كل خطوة.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+                <Button
+                  size="lg"
+                  className="bg-secondary hover:bg-secondary/90 text-primary text-lg px-10 py-6 transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1"
+                  asChild
+                >
+                  <Link href="https://community.motherhoodclub.net/auth/register">
+                    <span>سجلي الآن مجاناً</span>
+                    <ArrowRight className="mr-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white text-white bg-transparent hover:bg-white/10 text-lg px-10 py-6 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/community/subscription">
+                    <span>تعرفي على الباقات</span>
+                  </Link>
+                </Button>
+              </div>
+
+              {/* App Download */}
+              <div className="pt-8 border-t border-white/20">
+                <p className="text-white/70 mb-6">أو حمّلي التطبيق على جوالك</p>
+                <div className="flex flex-row justify-center gap-4">
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.mmayman1009.motherhoodclubappqy4uoy10&hl=en"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-transform hover:scale-105"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                      alt="Get it on Google Play"
+                      className="h-12"
+                    />
+                  </a>
+                  <a
+                    href="https://apps.apple.com/in/app/motherhoodclub-community/id6749237917?platform=vision"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-transform hover:scale-105"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+                      alt="Download on the App Store"
+                      className="h-12"
+                    />
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
       </main>
 
        {/* Footer */}
