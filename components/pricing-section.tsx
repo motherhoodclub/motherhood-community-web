@@ -10,13 +10,21 @@ import { Badge } from "@/components/ui/badge"
 import { Check } from "lucide-react"
 
 export function PricingSection() {
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("monthly")
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "semi-annual" | "yearly">("monthly")
 
   const monthlyFeatures = [
     "الوصول إلى جميع المناقشات والمواضيع",
     "المشاركة في المنتديات والمجموعات",
     "حضور ورش العمل والفعاليات",
     "الوصول إلى المحتوى الحصري",
+  ]
+
+  const semiAnnualFeatures = [
+    "الوصول إلى جميع المناقشات والمواضيع",
+    "المشاركة في المنتديات والمجموعات",
+    "حضور ورش العمل والفعاليات",
+    "الوصول إلى المحتوى الحصري",
+    "استشارة تربوية مجانية",
   ]
 
   const yearlyFeatures = [
@@ -60,17 +68,18 @@ export function PricingSection() {
           <Tabs
             defaultValue="monthly"
             value={selectedPlan}
-            onValueChange={(value) => setSelectedPlan(value as "monthly" | "yearly")}
-            className="w-full max-w-md"
+            onValueChange={(value) => setSelectedPlan(value as "monthly" | "semi-annual" | "yearly")}
+            className="w-full max-w-lg"
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="monthly">شهري</TabsTrigger>
+              <TabsTrigger value="semi-annual">6 أشهر</TabsTrigger>
               <TabsTrigger value="yearly">سنوي</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -93,7 +102,7 @@ export function PricingSection() {
                 <ul className="space-y-2">
                   {monthlyFeatures.map((feature, index) => (
                     <li key={index} className="flex items-center">
-                      <Check className="ml-2 h-4 w-4 text-green-500" />
+                      <Check className="ml-2 h-4 w-4 text-green-500 shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -116,6 +125,50 @@ export function PricingSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
           >
+            <Card className={`h-full ${selectedPlan === "semi-annual" ? "border-primary" : ""}`}>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex justify-between items-center">
+                    <span>اشتراك 6 أشهر</span>
+                    {selectedPlan === "semi-annual" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
+                  </CardTitle>
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    وفري 17%
+                  </Badge>
+                </div>
+                <CardDescription>اشتراك نصف سنوي بسعر مخفض</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-3xl font-bold">
+                  $165 <span className="text-muted-foreground text-sm font-normal">/ 6 أشهر</span>
+                </div>
+
+                <ul className="space-y-2">
+                  {semiAnnualFeatures.map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <Check className="ml-2 h-4 w-4 text-green-500 shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1"
+                  asChild
+                >
+                  <Link href="/auth/login">اشترك الآن</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
             <Card className={`h-full ${selectedPlan === "yearly" ? "border-primary" : ""}`}>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -124,7 +177,7 @@ export function PricingSection() {
                     {selectedPlan === "yearly" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
                   </CardTitle>
                   <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                    وفري 24%
+                    وفري 37%
                   </Badge>
                 </div>
                 <CardDescription>اشتراك سنوي بسعر مخفض</CardDescription>
@@ -137,7 +190,7 @@ export function PricingSection() {
                 <ul className="space-y-2">
                   {yearlyFeatures.map((feature, index) => (
                     <li key={index} className="flex items-center">
-                      <Check className="ml-2 h-4 w-4 text-green-500" />
+                      <Check className="ml-2 h-4 w-4 text-green-500 shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
