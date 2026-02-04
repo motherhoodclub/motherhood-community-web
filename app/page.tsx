@@ -225,32 +225,8 @@ export default function Home() {
   const { scrollYProgress } = useScroll()
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "100%"])
   const [mounted, setMounted] = useState(false)
-  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0)
   const [isHeaderFixed, setIsHeaderFixed] = useState(false)
   const [expanded, setExpanded] = useState({})
-
-  const testimonials = [
-    {
-      name: "سارة أحمد",
-      comment: "مجتمع الدعم التربوي غير حياتي كوالد. الدعم والمعلومات التي حصلت عليها لا تقدر بثمن.",
-      avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=100&h=100&fit=crop",
-    },
-    {
-      name: "منى الخالد",
-      comment: "الاستشارات المتخصصة ساعدتني كثيراً في التعامل مع تحديات تربية أطفالي.",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop",
-    },
-    {
-      name: "نورة العتيبي",
-      comment: "المجتمع هنا رائع. وجدت أصدقاء والآباء والأمهات يفهمون تماماً ما أمر به.",
-      avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop",
-    },
-    {
-      name: "ليلى القحطاني",
-      comment: "ورش العمل التفاعلية أعطتني مهارات جديدة ساعدتني في فهم احتياجات طفلي بشكل أفضل.",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop",
-    },
-  ]
 
   useEffect(() => {
     setMounted(true)
@@ -262,14 +238,6 @@ export default function Home() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTestimonialIndex((prev) => (prev + 1) % testimonials.length)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [testimonials.length])
 
   if (!mounted) {
     return null
@@ -695,15 +663,6 @@ export default function Home() {
 
         {/* Testimonials Section */}
         <section className="py-20 bg-white relative">
-          <motion.div
-            className="absolute inset-0"
-            style={{
-              background:
-                "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-dots-darker.png_sQW9Y1tL3j9g5yvG17V8jJ39965666.png')",
-              opacity: 0.2,
-              zIndex: 0,
-            }}
-          />
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center mb-16">
               <Badge className="mb-4 px-3 py-1 bg-secondary/20 text-primary rounded-full">آراء الآباء والأمهات</Badge>
@@ -711,29 +670,29 @@ export default function Home() {
               <div className="w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto"></div>
             </div>
 
-            <motion.div
-              className="max-w-3xl mx-auto bg-white/80 backdrop-blur-sm rounded-xl shadow-xl p-8 md:p-12"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true }}
-            >
-              <div className="flex items-center mb-6">
-                <Avatar className="w-16 h-16 border-2 border-secondary/30">
-                  <AvatarImage
-                    src={testimonials[activeTestimonialIndex].avatar || "/placeholder.svg"}
-                    alt={testimonials[activeTestimonialIndex].name}
-                  />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                    {testimonials[activeTestimonialIndex].name[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="mr-4">
-                  <h4 className="text-xl font-semibold text-primary">{testimonials[activeTestimonialIndex].name}</h4>
-                </div>
-              </div>
-              <p className="text-gray-700 leading-relaxed text-lg">"{testimonials[activeTestimonialIndex].comment}"</p>
-            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((num, index) => (
+                <motion.div
+                  key={num}
+                  className="rounded-xl overflow-hidden shadow-custom hover:shadow-custom-hover transition-shadow duration-300"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -5 }}
+                >
+                  <div className="relative aspect-square">
+                    <Image
+                      src={`/reviews/${num}.jpeg`}
+                      alt={`تقييم ${num}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
 
