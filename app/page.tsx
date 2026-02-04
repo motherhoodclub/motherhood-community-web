@@ -776,7 +776,7 @@ export default function Home() {
       </main>
 
        {/* Footer */}
-      <footer id="contact" className="bg-primary text-white py-12 mt-16" dir="rtl">
+      <footer id="contact" className="bg-primary text-white py-12" dir="rtl">
         <div className="container mx-auto px-4 text-center" dir="rtl">
           <p className="text-lg mb-4">جميع الحقوق محفوظة لمجتمع الأمومة © {new Date().getFullYear()}</p>
           <div className="flex justify-center space-x-4 rtl:space-x-reverse">
