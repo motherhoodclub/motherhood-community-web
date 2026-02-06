@@ -346,12 +346,12 @@ export default function Home() {
 
             {/* Loom Video Embed */}
             <motion.div
-              className="mb-12 max-w-2xl mx-auto"
+              className="mb-12 max-w-xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.8 }}
             >
-              <div style={{ position: "relative", paddingBottom: "177.77777777777777%", height: 0 }}>
+              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
                 <iframe
                   src="https://www.loom.com/embed/7480ab42a01f4d31a1a93e9b26e338a2"
                   frameBorder="0"
