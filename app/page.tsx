@@ -343,6 +343,24 @@ export default function Home() {
             >
               انضم إلى مجتمع الدعم التربوي واحصل على الدعم والمعرفة التي تحتاجها في كل مرحلة من رحلة الوالدية
             </motion.p>
+
+            {/* Loom Video Embed */}
+            <motion.div
+              className="mb-12 max-w-2xl mx-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+            >
+              <div style={{ position: "relative", paddingBottom: "177.77777777777777%", height: 0 }}>
+                <iframe
+                  src="https://www.loom.com/embed/7480ab42a01f4d31a1a93e9b26e338a2"
+                  frameBorder="0"
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                  allowFullScreen
+                />
+              </div>
+            </motion.div>
+
             <motion.div
               className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse"
               initial={{ opacity: 0 }}
