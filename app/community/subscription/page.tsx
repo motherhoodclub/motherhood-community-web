@@ -356,7 +356,6 @@ export default function SubscriptionPage() {
     "المشاركة في المنتديات والمجموعات",
     "حضور ورش العمل والفعاليات",
     "الوصول إلى المحتوى الحصري",
-    "استشارة تربوية مجانية",
   ]
 
   const yearlyFeatures = [
