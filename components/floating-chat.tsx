@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Send, MessageCircle, Clock, X, Minimize2, Mic, Square, Play, Pause } from "lucide-react"
+import { Send, MessageCircle, Clock, X, Minimize2, Mic, Square, Play, Pause, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
@@ -50,7 +50,9 @@ export default function FloatingChat() {
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null)
+  const [isAtBottom, setIsAtBottom] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaWidgetRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -58,8 +60,25 @@ export default function FloatingChat() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
+  const getWidgetScrollContainer = () => {
+    return scrollAreaWidgetRef.current?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null
+  }
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = getWidgetScrollContainer()
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
+  const handleWidgetScroll = () => {
+    const container = getWidgetScrollContainer()
+    if (container) {
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+      setIsAtBottom(distanceFromBottom < 80)
+    }
   }
 
   useEffect(() => {
@@ -265,8 +284,19 @@ export default function FloatingChat() {
   }, [user, userProfile]) // Only depend on user and profile objects
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    if (isAtBottom) {
+      scrollToBottom()
+    }
+  }, [messages, isAtBottom])
+
+  // Attach scroll listener to the radix scroll viewport
+  useEffect(() => {
+    const container = getWidgetScrollContainer()
+    if (container) {
+      container.addEventListener("scroll", handleWidgetScroll)
+      return () => container.removeEventListener("scroll", handleWidgetScroll)
+    }
+  }, [messages, isOpen, isMinimized])
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -496,7 +526,7 @@ export default function FloatingChat() {
             {!isMinimized && (
               <CardContent className="flex flex-col p-0 h-80">
                 {/* Messages */}
-                <ScrollArea className="flex-1 px-3">
+                <ScrollArea ref={scrollAreaWidgetRef} className="flex-1 px-3">
                   {isLoading ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
@@ -583,6 +613,17 @@ export default function FloatingChat() {
                       ))}
                       <div ref={messagesEndRef} />
                     </div>
+                  )}
+
+                  {/* Scroll to bottom button */}
+                  {!isAtBottom && messages.length > 0 && (
+                    <Button
+                      onClick={scrollToBottom}
+                      size="icon"
+                      className="sticky bottom-1 left-1/2 -translate-x-1/2 h-7 w-7 rounded-full shadow-lg z-10"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
                   )}
                 </ScrollArea>
 

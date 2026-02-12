@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Send, Users, MessageCircle, Clock, Mic, Square, Play, Pause } from "lucide-react"
+import { Send, Users, MessageCircle, Clock, Mic, Square, Play, Pause, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
@@ -49,6 +49,7 @@ export default function ChatPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null)
+  const [isAtBottom, setIsAtBottom] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -58,12 +59,22 @@ export default function ChatPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
+  const getScrollContainer = () => {
+    return scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null
+  }
+
   const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
-      }
+    const scrollContainer = getScrollContainer()
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
+    }
+  }
+
+  const handleScroll = () => {
+    const scrollContainer = getScrollContainer()
+    if (scrollContainer) {
+      const distanceFromBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight
+      setIsAtBottom(distanceFromBottom < 100)
     }
   }
 
@@ -233,10 +244,21 @@ export default function ChatPage() {
   }, [user, userProfile, supabase, toast])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom()
-    }, 100)
-    return () => clearTimeout(timer)
+    if (isAtBottom) {
+      const timer = setTimeout(() => {
+        scrollToBottom()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [messages, isAtBottom])
+
+  // Attach scroll listener to the radix scroll viewport
+  useEffect(() => {
+    const scrollContainer = getScrollContainer()
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", handleScroll)
+      return () => scrollContainer.removeEventListener("scroll", handleScroll)
+    }
   }, [messages])
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -536,6 +558,17 @@ export default function ChatPage() {
                       ))}
                       <div ref={messagesEndRef} />
                     </div>
+                  )}
+
+                  {/* Scroll to bottom button */}
+                  {!isAtBottom && messages.length > 0 && (
+                    <Button
+                      onClick={scrollToBottom}
+                      size="icon"
+                      className="sticky bottom-2 left-1/2 -translate-x-1/2 h-9 w-9 rounded-full shadow-lg z-10"
+                    >
+                      <ChevronDown className="h-5 w-5" />
+                    </Button>
                   )}
                 </ScrollArea>
               </div>
