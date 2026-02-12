@@ -346,14 +346,14 @@ export default function Home() {
 
             {/* Loom Video Embed */}
             <motion.div
-              className="mb-12 max-w-xl mx-auto"
+              className="mb-12 max-w-3xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.8 }}
             >
               <div style={{ position: "relative", paddingBottom: "62.5%", height: 0 }}>
                 <iframe
-                  src="https://www.loom.com/embed/49975ea48d33451ebacbefcf8fe69d3d"
+                  src="https://www.loom.com/embed/49975ea48d33451ebacbefcf8fe69d3d?sid=&hide_owner=true&hide_share_and_embed=true&hide_title=true&hideEmbedTopBar=true"
                   frameBorder="0"
                   style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
                   allowFullScreen
