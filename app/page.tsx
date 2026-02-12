@@ -351,9 +351,9 @@ export default function Home() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.8 }}
             >
-              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+              <div style={{ position: "relative", paddingBottom: "62.5%", height: 0 }}>
                 <iframe
-                  src="https://www.loom.com/embed/7480ab42a01f4d31a1a93e9b26e338a2"
+                  src="https://www.loom.com/embed/49975ea48d33451ebacbefcf8fe69d3d"
                   frameBorder="0"
                   style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
                   allowFullScreen
