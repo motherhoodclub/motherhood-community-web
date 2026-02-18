@@ -679,40 +679,6 @@ export default function Home() {
           {/* <WaveDivider className="bottom-0" flip={true} color="text-white" /> */}
         </section>
 
-        {/* Testimonials Section */}
-        <section className="py-20 bg-white relative">
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center mb-16">
-              <Badge className="mb-4 px-3 py-1 bg-secondary/20 text-primary rounded-full">آراء الآباء والأمهات</Badge>
-              <h2 className="text-4xl font-semibold mb-4 text-primary">ماذا قال الآباء والأمهات عن مجتمعنا؟</h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto"></div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((num, index) => (
-                <motion.div
-                  key={num}
-                  className="rounded-xl overflow-hidden shadow-custom hover:shadow-custom-hover transition-shadow duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -5 }}
-                >
-                  <div className="relative aspect-square">
-                    <Image
-                      src={`/reviews/${num}.jpeg`}
-                      alt={`تقييم ${num}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-br from-primary via-primary/95 to-primary relative overflow-hidden">
