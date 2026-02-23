@@ -289,6 +289,17 @@ export default function FloatingChat() {
     }
   }, [messages, isAtBottom])
 
+  // Scroll to bottom when chat opens or is maximized
+  useEffect(() => {
+    if (isOpen && !isMinimized) {
+      // Small delay to ensure ScrollArea viewport is rendered
+      const timer = setTimeout(() => {
+        scrollToBottom()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, isMinimized])
+
   // Attach scroll listener to the radix scroll viewport
   useEffect(() => {
     const container = getWidgetScrollContainer()

@@ -243,6 +243,16 @@ export default function ChatPage() {
     }
   }, [user, userProfile, supabase, toast])
 
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      const timer = setTimeout(() => {
+        scrollToBottom()
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [isLoading])
+
   useEffect(() => {
     if (isAtBottom) {
       const timer = setTimeout(() => {
