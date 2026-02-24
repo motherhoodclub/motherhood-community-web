@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,8 +13,6 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import ProtectedRoute from "@/components/protected-route"
 import { Badge } from "@/components/ui/badge"
 
-// Add a new sorting state and update the categories
-const categories = ["الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "كل ما يخص اطفال التوحد", "أخرى"]
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "نقاشات"]
 const ageGroups = ["عمر من صفر لسنتين", "سنتين ل 6 سنوات", "6-14 سنة"]
 
@@ -24,6 +22,7 @@ export default function NewTopicPage() {
   const [category, setCategory] = useState("")
   const [sorting, setSorting] = useState("")
   const [ageGroup, setAgeGroup] = useState("")
+  const [categories, setCategories] = useState<string[]>([])
   const [featuredImage, setFeaturedImage] = useState<File | null>(null)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const [tags, setTags] = useState<string[]>([])
@@ -31,6 +30,19 @@ export default function NewTopicPage() {
   const [loomEmbedCode, setLoomEmbedCode] = useState("")
   const router = useRouter()
   const supabase = createClientComponentClient()
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("topic_categories")
+        .select("name")
+        .order("created_at", { ascending: true })
+      if (data) {
+        setCategories(data.map((c) => c.name))
+      }
+    }
+    fetchCategories()
+  }, [])
 
   // Update the handleSubmit function to include the sorting field
   const handleSubmit = async (e: React.FormEvent) => {

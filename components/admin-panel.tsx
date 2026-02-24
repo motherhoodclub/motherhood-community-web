@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UserManagement } from "@/components/admin/user-management"
 import { TopicControl } from "@/components/admin/topic-control"
 import { WorkshopManagement } from "@/components/admin/workshop-management"
+import { CategoryManagement } from "@/components/admin/CategoryManagement"
 
 export function AdminPanel() {
   const [activeTab, setActiveTab] = useState("users")
@@ -18,9 +19,10 @@ export function AdminPanel() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="users">المستخدمون</TabsTrigger>
             <TabsTrigger value="topics">المواضيع</TabsTrigger>
+            <TabsTrigger value="categories">الفئات</TabsTrigger>
             <TabsTrigger value="workshops">ورش العمل</TabsTrigger>
           </TabsList>
           <TabsContent value="users">
@@ -28,6 +30,9 @@ export function AdminPanel() {
           </TabsContent>
           <TabsContent value="topics">
             <TopicControl />
+          </TabsContent>
+          <TabsContent value="categories">
+            <CategoryManagement />
           </TabsContent>
           <TabsContent value="workshops">
             <WorkshopManagement />

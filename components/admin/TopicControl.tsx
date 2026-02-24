@@ -10,16 +10,29 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 
-const categories = ["الكل", "الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "كل ما يخص اطفال التوحد", "أخرى"]
 const sortingOptions = ["الكل", "دروس", "أسئلة", "مشاريع", "نقاشات"]
 
 export function TopicControl() {
   const [topics, setTopics] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [categories, setCategories] = useState(["الكل"])
   const [selectedCategory, setSelectedCategory] = useState("الكل")
   const [selectedSorting, setSelectedSorting] = useState("الكل")
   const supabase = createClientComponentClient()
   const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("topic_categories")
+        .select("name")
+        .order("created_at", { ascending: true })
+      if (data) {
+        setCategories(["الكل", ...data.map((c) => c.name)])
+      }
+    }
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
     fetchTopics()

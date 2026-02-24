@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,12 +13,26 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Upload, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-
-const categories = ["الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "النمو والتطور", "الدعم النفسي", "أخرى"]
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function NewTopic() {
   const router = useRouter()
   const [title, setTitle] = useState("")
+  const [categories, setCategories] = useState<string[]>([])
+  const supabase = createClientComponentClient()
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("topic_categories")
+        .select("name")
+        .order("created_at", { ascending: true })
+      if (data) {
+        setCategories(data.map((c) => c.name))
+      }
+    }
+    fetchCategories()
+  }, [])
   const [content, setContent] = useState("")
   const [category, setCategory] = useState("")
   const [tags, setTags] = useState("")
