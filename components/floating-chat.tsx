@@ -9,7 +9,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { Send, MessageCircle, Clock, X, Minimize2, Mic, Square, Play, Pause, ChevronDown } from "lucide-react"
+import { Send, MessageCircle, Clock, X, Minimize2, Mic, Square, Play, Pause, ChevronDown, Trash2, Ban, MoreVertical, ShieldAlert } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
@@ -51,6 +67,10 @@ export default function FloatingChat() {
   const [recordingTime, setRecordingTime] = useState(0)
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+  const [isBanned, setIsBanned] = useState(false)
+  const [bannedUsers, setBannedUsers] = useState<string[]>([])
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; messageId: string | null }>({ open: false, messageId: null })
+  const [banConfirm, setBanConfirm] = useState<{ open: boolean; userId: string | null; username: string | null }>({ open: false, userId: null, username: null })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaWidgetRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -217,6 +237,17 @@ export default function FloatingChat() {
               } catch (error) {
                 console.error("Error fetching new message:", error)
               }
+            },
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "DELETE",
+              schema: "public",
+              table: "chat_messages",
+            },
+            (payload) => {
+              setMessages((prev) => prev.filter((m) => m.id !== payload.old.id))
             },
           )
           .subscribe()
@@ -463,6 +494,79 @@ export default function FloatingChat() {
     }
   }
 
+  const isAdmin = userProfile?.is_admin === true || userProfile?.is_admin === "true" || userProfile?.is_admin === 1 || userProfile?.is_admin === "1"
+
+  // Check if current user is banned from chat
+  useEffect(() => {
+    if (!user) return
+    const checkBanStatus = async () => {
+      const { data } = await supabase
+        .from("banned_chat_users")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+      setIsBanned(!!data)
+    }
+    checkBanStatus()
+  }, [user, supabase])
+
+  // Fetch banned users list (for admins)
+  useEffect(() => {
+    if (!isAdmin) return
+    const fetchBannedUsers = async () => {
+      const { data } = await supabase
+        .from("banned_chat_users")
+        .select("user_id")
+      setBannedUsers(data?.map((b) => b.user_id) || [])
+    }
+    fetchBannedUsers()
+
+    const bannedChannel = supabase
+      .channel("floating_banned_chat_users")
+      .on("postgres_changes", { event: "*", schema: "public", table: "banned_chat_users" }, () => fetchBannedUsers())
+      .subscribe()
+
+    return () => { bannedChannel.unsubscribe() }
+  }, [isAdmin, supabase])
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase.from("chat_messages").delete().eq("id", messageId)
+      if (error) throw error
+      setMessages((prev) => prev.filter((m) => m.id !== messageId))
+      toast({ title: "تم", description: "تم حذف الرسالة بنجاح" })
+    } catch (error) {
+      console.error("Error deleting message:", error)
+      toast({ title: "خطأ", description: "فشل في حذف الرسالة", variant: "destructive" })
+    }
+    setDeleteConfirm({ open: false, messageId: null })
+  }
+
+  const banUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.from("banned_chat_users").insert({ user_id: userId, banned_by: user.id })
+      if (error) throw error
+      setBannedUsers((prev) => [...prev, userId])
+      toast({ title: "تم", description: "تم حظر المستخدم من المحادثة" })
+    } catch (error) {
+      console.error("Error banning user:", error)
+      toast({ title: "خطأ", description: "فشل في حظر المستخدم", variant: "destructive" })
+    }
+    setBanConfirm({ open: false, userId: null, username: null })
+  }
+
+  const unbanUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.from("banned_chat_users").delete().eq("user_id", userId)
+      if (error) throw error
+      setBannedUsers((prev) => prev.filter((id) => id !== userId))
+      toast({ title: "تم", description: "تم رفع الحظر عن المستخدم" })
+    } catch (error) {
+      console.error("Error unbanning user:", error)
+      toast({ title: "خطأ", description: "فشل في رفع الحظر", variant: "destructive" })
+    }
+  }
+
   const toggleChat = () => {
     setIsOpen(!isOpen)
     setIsMinimized(false)
@@ -558,7 +662,7 @@ export default function FloatingChat() {
                       {messages.map((message) => (
                         <div
                           key={message.id}
-                          className={cn("flex gap-2", message.user_id === user.id ? "flex-row-reverse" : "flex-row")}
+                          className={cn("flex gap-2 group", message.user_id === user.id ? "flex-row-reverse" : "flex-row")}
                         >
                           <Avatar className="h-6 w-6 flex-shrink-0">
                             <AvatarImage src={message.user_profiles?.avatar_url || "/placeholder.svg"} />
@@ -579,6 +683,43 @@ export default function FloatingChat() {
                                 <Badge variant="secondary" className="text-xs px-1 py-0">
                                   مشرف
                                 </Badge>
+                              )}
+                              {/* Admin actions */}
+                              {isAdmin && message.user_id !== user.id && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <MoreVertical className="h-3 w-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive text-xs"
+                                      onClick={() => setDeleteConfirm({ open: true, messageId: message.id })}
+                                    >
+                                      <Trash2 className="h-3 w-3 ml-1" />
+                                      حذف الرسالة
+                                    </DropdownMenuItem>
+                                    {!bannedUsers.includes(message.user_id) ? (
+                                      <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive text-xs"
+                                        onClick={() => setBanConfirm({ open: true, userId: message.user_id, username: message.user_profiles?.username || "مستخدم" })}
+                                      >
+                                        <Ban className="h-3 w-3 ml-1" />
+                                        حظر
+                                      </DropdownMenuItem>
+                                    ) : (
+                                      <DropdownMenuItem className="text-xs" onClick={() => unbanUser(message.user_id)}>
+                                        <ShieldAlert className="h-3 w-3 ml-1" />
+                                        رفع الحظر
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               )}
                             </div>
 
@@ -640,7 +781,12 @@ export default function FloatingChat() {
 
                 {/* Message Input */}
                 <div className="p-3 border-t">
-                  {isRecording ? (
+                  {isBanned ? (
+                    <div className="flex items-center justify-center gap-1 py-1 text-destructive">
+                      <Ban className="h-3 w-3" />
+                      <span className="text-xs font-medium">تم حظرك من إرسال الرسائل</span>
+                    </div>
+                  ) : isRecording ? (
                     <div className="flex items-center justify-center gap-2 py-1">
                       <div className="flex items-center gap-1">
                         <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
@@ -693,6 +839,47 @@ export default function FloatingChat() {
           </Card>
         </div>
       )}
+      {/* Delete message confirmation dialog */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => !open && setDeleteConfirm({ open: false, messageId: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الرسالة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteConfirm.messageId && deleteMessage(deleteConfirm.messageId)}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Ban user confirmation dialog */}
+      <AlertDialog open={banConfirm.open} onOpenChange={(open) => !open && setBanConfirm({ open: false, userId: null, username: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حظر المستخدم</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حظر "{banConfirm.username}" من إرسال الرسائل في المحادثة؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => banConfirm.userId && banUser(banConfirm.userId)}
+            >
+              حظر
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
