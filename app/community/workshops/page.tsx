@@ -6,7 +6,7 @@ import { CardFooter } from "@/components/ui/card"
 
 import { CardHeader } from "@/components/ui/card"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { formatWorkshopDate } from "@/lib/date-utils"
+import { Pagination } from "@/components/pagination"
 
 type Workshop = {
   id: string
@@ -37,8 +38,11 @@ export default function WorkshopsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [upcomingPage, setUpcomingPage] = useState(1)
+  const [pastPage, setPastPage] = useState(1)
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const ITEMS_PER_PAGE = 6
 
   useEffect(() => {
     const fetchWorkshops = async () => {
@@ -79,6 +83,8 @@ export default function WorkshopsPage() {
       )
       setFilteredWorkshops(filtered)
     }
+    setUpcomingPage(1)
+    setPastPage(1)
   }, [searchQuery, workshops])
 
   const isPastWorkshop = (dateString: string) => {
@@ -90,6 +96,29 @@ export default function WorkshopsPage() {
     today.setHours(0, 0, 0, 0)
     return workshopDate < today
   }
+
+  const upcomingWorkshops = useMemo(
+    () => filteredWorkshops.filter((workshop) => !isPastWorkshop(workshop.date)),
+    [filteredWorkshops],
+  )
+
+  const pastWorkshops = useMemo(
+    () => filteredWorkshops.filter((workshop) => isPastWorkshop(workshop.date)),
+    [filteredWorkshops],
+  )
+
+  const upcomingTotalPages = Math.ceil(upcomingWorkshops.length / ITEMS_PER_PAGE)
+  const pastTotalPages = Math.ceil(pastWorkshops.length / ITEMS_PER_PAGE)
+
+  const paginatedUpcoming = useMemo(
+    () => upcomingWorkshops.slice((upcomingPage - 1) * ITEMS_PER_PAGE, upcomingPage * ITEMS_PER_PAGE),
+    [upcomingWorkshops, upcomingPage],
+  )
+
+  const paginatedPast = useMemo(
+    () => pastWorkshops.slice((pastPage - 1) * ITEMS_PER_PAGE, pastPage * ITEMS_PER_PAGE),
+    [pastWorkshops, pastPage],
+  )
 
   return (
     <div className="space-y-6">
@@ -155,11 +184,10 @@ export default function WorkshopsPage() {
               </Card>
             ))}
           </div>
-        ) : filteredWorkshops.filter((workshop) => !isPastWorkshop(workshop.date)).length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredWorkshops
-              .filter((workshop) => !isPastWorkshop(workshop.date))
-              .map((workshop) => (
+        ) : upcomingWorkshops.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedUpcoming.map((workshop) => (
                 <Card
                   key={workshop.id}
                   className={cn(
@@ -224,7 +252,15 @@ export default function WorkshopsPage() {
                   </CardFooter>
                 </Card>
               ))}
-          </div>
+            </div>
+            {upcomingTotalPages > 1 && (
+              <Pagination
+                currentPage={upcomingPage}
+                totalPages={upcomingTotalPages}
+                onPageChange={setUpcomingPage}
+              />
+            )}
+          </>
         ) : (
           <div
             className={cn(
@@ -274,11 +310,10 @@ export default function WorkshopsPage() {
               </Card>
             ))}
           </div>
-        ) : filteredWorkshops.filter((workshop) => isPastWorkshop(workshop.date)).length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredWorkshops
-              .filter((workshop) => isPastWorkshop(workshop.date))
-              .map((workshop) => (
+        ) : pastWorkshops.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedPast.map((workshop) => (
                 <Card
                   key={workshop.id}
                   className={cn(
@@ -331,7 +366,15 @@ export default function WorkshopsPage() {
                   </CardFooter>
                 </Card>
               ))}
-          </div>
+            </div>
+            {pastTotalPages > 1 && (
+              <Pagination
+                currentPage={pastPage}
+                totalPages={pastTotalPages}
+                onPageChange={setPastPage}
+              />
+            )}
+          </>
         ) : (
           <div
             className={cn(
