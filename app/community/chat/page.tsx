@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Send, Users, MessageCircle, Clock, Mic, Square, Play, Pause, ChevronDown, Trash2, Ban, MoreVertical, ShieldAlert } from "lucide-react"
+import { Send, Users, MessageCircle, Clock, Mic, Square, Play, Pause, ChevronDown, Trash2, Ban, MoreVertical, ShieldAlert, Pencil, Check, X } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +70,8 @@ export default function ChatPage() {
   const [bannedUsers, setBannedUsers] = useState<string[]>([])
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; messageId: string | null }>({ open: false, messageId: null })
   const [banConfirm, setBanConfirm] = useState<{ open: boolean; userId: string | null; username: string | null }>({ open: false, userId: null, username: null })
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -235,6 +237,36 @@ export default function ChatPage() {
 
             if (data) {
               setMessages((prev) => [...prev, data])
+            }
+          },
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "chat_messages",
+          },
+          async (payload) => {
+            const { data } = await supabase
+              .from("chat_messages")
+              .select(`
+                id,
+                content,
+                audio_url,
+                user_id,
+                created_at,
+                user_profiles (
+                  username,
+                  avatar_url,
+                  is_admin
+                )
+              `)
+              .eq("id", payload.new.id)
+              .single()
+
+            if (data) {
+              setMessages((prev) => prev.map((m) => m.id === data.id ? data : m))
             }
           },
         )
@@ -514,6 +546,33 @@ export default function ChatPage() {
     setDeleteConfirm({ open: false, messageId: null })
   }
 
+  const startEditing = (message: Message) => {
+    setEditingMessageId(message.id)
+    setEditContent(message.content)
+  }
+
+  const cancelEditing = () => {
+    setEditingMessageId(null)
+    setEditContent("")
+  }
+
+  const saveEdit = async () => {
+    if (!editingMessageId || !editContent.trim()) return
+    try {
+      const { error } = await supabase
+        .from("chat_messages")
+        .update({ content: editContent.trim() })
+        .eq("id", editingMessageId)
+      if (error) throw error
+      setMessages((prev) => prev.map((m) => m.id === editingMessageId ? { ...m, content: editContent.trim() } : m))
+      toast({ title: "تم", description: "تم تعديل الرسالة" })
+    } catch (error) {
+      console.error("Error editing message:", error)
+      toast({ title: "خطأ", description: "فشل في تعديل الرسالة", variant: "destructive" })
+    }
+    cancelEditing()
+  }
+
   const banUser = async (userId: string) => {
     try {
       const { error } = await supabase
@@ -670,6 +729,12 @@ export default function ChatPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="start">
+                                    {!message.audio_url && (
+                                      <DropdownMenuItem onClick={() => startEditing(message)}>
+                                        <Pencil className="h-4 w-4 ml-2" />
+                                        تعديل الرسالة
+                                      </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem
                                       className="text-destructive focus:text-destructive"
                                       onClick={() => setDeleteConfirm({ open: true, messageId: message.id })}
@@ -696,38 +761,72 @@ export default function ChatPage() {
                               )}
                             </div>
 
-                            <div
-                              className={cn(
-                                "rounded-lg px-3 py-2 text-sm break-words",
-                                message.user_id === user.id ? "bg-primary text-primary-foreground" : "bg-muted",
-                              )}
-                            >
-                              {message.audio_url ? (
-                                <div className="flex items-center gap-2">
+                            {editingMessageId === message.id ? (
+                              <div className="flex items-center gap-2 w-full">
+                                <Input
+                                  value={editContent}
+                                  onChange={(e) => setEditContent(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") saveEdit()
+                                    if (e.key === "Escape") cancelEditing()
+                                  }}
+                                  className="flex-1 h-8 text-sm"
+                                  autoFocus
+                                />
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={saveEdit}>
+                                  <Check className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={cancelEditing}>
+                                  <X className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <div
+                                  className={cn(
+                                    "rounded-lg px-3 py-2 text-sm break-words",
+                                    message.user_id === user.id ? "bg-primary text-primary-foreground" : "bg-muted",
+                                  )}
+                                >
+                                  {message.audio_url ? (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className={cn(
+                                          "h-8 w-8 p-0 rounded-full",
+                                          message.user_id === user.id
+                                            ? "hover:bg-primary-foreground/20"
+                                            : "hover:bg-muted-foreground/20",
+                                        )}
+                                        onClick={() => playAudio(message.id, message.audio_url!)}
+                                      >
+                                        {playingAudioId === message.id ? (
+                                          <Pause className="h-4 w-4" />
+                                        ) : (
+                                          <Play className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                      <span>رسالة صوتية</span>
+                                    </div>
+                                  ) : (
+                                    message.content
+                                  )}
+                                </div>
+                                {/* Edit button for own messages (not audio) */}
+                                {!message.audio_url && (message.user_id === user.id || isAdmin) && (
                                   <Button
-                                    type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className={cn(
-                                      "h-8 w-8 p-0 rounded-full",
-                                      message.user_id === user.id
-                                        ? "hover:bg-primary-foreground/20"
-                                        : "hover:bg-muted-foreground/20",
-                                    )}
-                                    onClick={() => playAudio(message.id, message.audio_url!)}
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => startEditing(message)}
                                   >
-                                    {playingAudioId === message.id ? (
-                                      <Pause className="h-4 w-4" />
-                                    ) : (
-                                      <Play className="h-4 w-4" />
-                                    )}
+                                    <Pencil className="h-3 w-3 text-muted-foreground" />
                                   </Button>
-                                  <span>رسالة صوتية</span>
-                                </div>
-                              ) : (
-                                message.content
-                              )}
-                            </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
