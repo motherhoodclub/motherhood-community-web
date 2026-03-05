@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react"
 import { HeaderHome } from "@/components/header-home"
+import { PricingSection } from "@/components/pricing-section"
 
 // BackToTop Button Component
 const BackToTop = () => {
@@ -534,7 +535,42 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ========== 10) FAQ ========== */}
+        {/* ========== 10) Testimonials ========== */}
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <Badge className="mb-4 px-3 py-1 bg-secondary/20 text-primary rounded-full">آراء الأمهات</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary">ماذا تقول الأمهات عن المجتمع؟</h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto"></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {[1, 2, 3, 4, 5, 6, 7].map((num, index) => (
+                <motion.div
+                  key={num}
+                  className="rounded-xl overflow-hidden shadow-custom hover:shadow-custom-hover transition-all duration-300 border border-gray-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -5 }}
+                >
+                  <Image
+                    src={`/reviews/${num}.jpeg`}
+                    alt={`تجربة أم ${num}`}
+                    width={400}
+                    height={500}
+                    className="w-full h-auto object-cover"
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ========== 11) Pricing ========== */}
+        <PricingSection />
+
+        {/* ========== 12) FAQ ========== */}
         <section className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
