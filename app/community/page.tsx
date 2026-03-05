@@ -56,7 +56,7 @@ export default function CommunityPage() {
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory)
+  const [selectedCategory, setSelectedCategory] = useState(isMainCategoryFromUrl ? "all" : initialCategory)
   const [likedTopics, setLikedTopics] = useState({})
   const [bookmarkedTopics, setBookmarkedTopics] = useState({})
   const [currentUser, setCurrentUser] = useState(null)
@@ -76,9 +76,12 @@ export default function CommunityPage() {
   // Sorting tabs (content type)
   const sortingTabs = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات"]
 
+  // If the URL category param is not a sorting tab, treat it as a main category
+  const isMainCategoryFromUrl = initialCategory !== "all" && !sortingTabs.includes(initialCategory)
+
   // Category & subcategory filter state
   const [mainCategories, setMainCategories] = useState<string[]>([])
-  const [selectedMainCategory, setSelectedMainCategory] = useState("all")
+  const [selectedMainCategory, setSelectedMainCategory] = useState(isMainCategoryFromUrl ? initialCategory : "all")
   const [subcategories, setSubcategories] = useState<string[]>([])
   const [selectedSubcategory, setSelectedSubcategory] = useState("all")
 

@@ -44,12 +44,13 @@ import { formatArabicDate } from "@/lib/date-utils"
 import FloatingChat from "@/components/floating-chat"
 import { Smartphone, X } from "lucide-react"
 
-const categories = [
-  { name: "الحمل والولادة", icon: "🤰" },
-  { name: "تربية الأطفال", icon: "👶" },
-  { name: "الصحة والتغذية", icon: "🥗" },
-  { name: "كل ما يخص اطفال التوحد", icon: "🧠" },
-]
+const defaultCategoryIcons: Record<string, string> = {
+  "الحمل والولادة": "🤰",
+  "تربية الأطفال": "👶",
+  "الصحة والتغذية": "🥗",
+  "كل ما يخص اطفال التوحد": "🧠",
+  "أخرى": "📂",
+}
 
 const ageGroups = [
   { name: "عمر من صفر لسنتين", icon: "👶" },
@@ -75,6 +76,7 @@ export default function CommunityLayout({
   const [unreadCount, setUnreadCount] = useState(0)
   const [downloadableFiles, setDownloadableFiles] = useState([])
   const [showAppBanner, setShowAppBanner] = useState(true)
+  const [categories, setCategories] = useState<{ name: string; icon: string; count: number }[]>([])
 
   useEffect(() => {
     const getUser = async () => {
@@ -90,6 +92,34 @@ export default function CommunityLayout({
       }
     }
     getUser()
+  }, [supabase])
+
+  // Fetch categories from DB with topic counts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data: catData } = await supabase
+        .from("topic_categories")
+        .select("name")
+        .order("created_at", { ascending: true })
+
+      if (catData) {
+        const categoriesWithCounts = await Promise.all(
+          catData.map(async (cat) => {
+            const { count } = await supabase
+              .from("topics")
+              .select("id", { count: "exact", head: true })
+              .eq("category", cat.name)
+            return {
+              name: cat.name,
+              icon: defaultCategoryIcons[cat.name] || "📁",
+              count: count || 0,
+            }
+          })
+        )
+        setCategories(categoriesWithCounts)
+      }
+    }
+    fetchCategories()
   }, [supabase])
 
   useEffect(() => {
@@ -775,7 +805,7 @@ export default function CommunityLayout({
                   {categories.map((category) => (
                     <Link
                       key={category.name}
-                      href={`/community/category/${encodeURIComponent(category.name)}`}
+                      href={`/community?category=${encodeURIComponent(category.name)}`}
                       className={cn(
                         "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
                         isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
@@ -785,12 +815,27 @@ export default function CommunityLayout({
                         <span className="text-lg group-hover:scale-110 transition-transform duration-200">
                           {category.icon}
                         </span>
-                        <span className={cn("truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                        <span className={cn("text-xs truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
                           {category.name}
                         </span>
                       </div>
+                      <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full",
+                        isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500",
+                      )}>
+                        {category.count}
+                      </span>
                     </Link>
                   ))}
+                  <Link
+                    href="/community?category=all"
+                    className={cn(
+                      "block text-center text-xs py-1.5 rounded-lg transition-colors",
+                      isDarkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700",
+                    )}
+                  >
+                    عرض الكل
+                  </Link>
                 </div>
               </div>
 
@@ -1261,7 +1306,7 @@ export default function CommunityLayout({
             {categories.map((category) => (
               <Link
                 key={category.name}
-                href={`/community/category/${encodeURIComponent(category.name)}`}
+                href={`/community?category=${encodeURIComponent(category.name)}`}
                 className={cn(
                   "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
                   isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
@@ -1271,13 +1316,28 @@ export default function CommunityLayout({
                   <span className="text-lg group-hover:scale-110 transition-transform duration-200">
                     {category.icon}
                   </span>
-                  <span className={cn("truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  <span className={cn("text-xs truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
                     {category.name}
                   </span>
                 </div>
+                <span className={cn(
+                  "text-xs px-1.5 py-0.5 rounded-full",
+                  isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500",
+                )}>
+                  {category.count}
+                </span>
               </Link>
             ))}
           </div>
+          <Link
+            href="/community?category=all"
+            className={cn(
+              "block text-center text-xs py-1.5 mt-2 rounded-lg transition-colors",
+              isDarkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700",
+            )}
+          >
+            عرض الكل
+          </Link>
         </div>
 
         {/* Age Groups */}
