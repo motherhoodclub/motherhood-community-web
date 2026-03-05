@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Send, Users, MessageCircle, Clock, Mic, Square, Play, Pause, ChevronDown, Trash2, Ban, MoreVertical, ShieldAlert, Pencil, Check, X } from "lucide-react"
+import { Send, Users, MessageCircle, Clock, Mic, Square, Play, Pause, ChevronDown, Trash2, Ban, MoreVertical, ShieldAlert, Pencil, Check, X, ImageIcon, Paperclip, FileText, Download } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,9 @@ interface Message {
   id: string
   content: string
   audio_url?: string
+  image_url?: string
+  file_url?: string
+  file_name?: string
   user_id: string
   created_at: string
   user_profiles: {
@@ -72,6 +75,9 @@ export default function ChatPage() {
   const [banConfirm, setBanConfirm] = useState<{ open: boolean; userId: string | null; username: string | null }>({ open: false, userId: null, username: null })
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [filePreview, setFilePreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -334,19 +340,71 @@ export default function ChatPage() {
     }
   }, [messages])
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "خطأ", description: "حجم الملف يجب أن لا يتجاوز 5 ميجابايت", variant: "destructive" })
+      return
+    }
+
+    setSelectedFile(file)
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader()
+      reader.onload = (e) => setFilePreview(e.target?.result as string)
+      reader.readAsDataURL(file)
+    } else {
+      setFilePreview(null)
+    }
+  }
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null)
+    setFilePreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !user || !userProfile || isSending) return
+    if ((!newMessage.trim() && !selectedFile) || !user || !userProfile || isSending) return
 
     setIsSending(true)
     try {
+      let imageUrl = null
+      let fileUrl = null
+      let fileName = null
+
+      if (selectedFile) {
+        const ext = selectedFile.name.split(".").pop()
+        const path = `chat-files/${user.id}-${Date.now()}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from("uploads")
+          .upload(path, selectedFile, { contentType: selectedFile.type })
+
+        if (uploadError) throw uploadError
+
+        const { data: urlData } = supabase.storage.from("uploads").getPublicUrl(path)
+
+        if (selectedFile.type.startsWith("image/")) {
+          imageUrl = urlData.publicUrl
+        } else {
+          fileUrl = urlData.publicUrl
+          fileName = selectedFile.name
+        }
+      }
+
       const { error } = await supabase.from("chat_messages").insert({
-        content: newMessage.trim(),
+        content: newMessage.trim() || (imageUrl ? "📷 صورة" : "📎 ملف"),
         user_id: user.id,
+        ...(imageUrl && { image_url: imageUrl }),
+        ...(fileUrl && { file_url: fileUrl }),
+        ...(fileName && { file_name: fileName }),
       })
 
       if (error) throw error
       setNewMessage("")
+      clearSelectedFile()
     } catch (error) {
       console.error("Error sending message:", error)
       toast({
@@ -810,6 +868,35 @@ export default function ChatPage() {
                                       </Button>
                                       <span>رسالة صوتية</span>
                                     </div>
+                                  ) : message.image_url ? (
+                                    <div className="space-y-1">
+                                      <a href={message.image_url} target="_blank" rel="noopener noreferrer">
+                                        <img
+                                          src={message.image_url}
+                                          alt="صورة"
+                                          className="max-h-48 max-w-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                        />
+                                      </a>
+                                      {message.content && message.content !== "📷 صورة" && (
+                                        <p>{message.content}</p>
+                                      )}
+                                    </div>
+                                  ) : message.file_url ? (
+                                    <div className="space-y-1">
+                                      <a
+                                        href={message.file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                      >
+                                        <FileText className="h-4 w-4 shrink-0" />
+                                        <span className="truncate max-w-[180px]">{message.file_name || "ملف"}</span>
+                                        <Download className="h-3 w-3 shrink-0" />
+                                      </a>
+                                      {message.content && message.content !== "📎 ملف" && (
+                                        <p>{message.content}</p>
+                                      )}
+                                    </div>
                                   ) : (
                                     message.content
                                   )}
@@ -872,32 +959,63 @@ export default function ChatPage() {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={sendMessage} className="flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="اكتب رسالتك هنا..."
-                      disabled={isSending}
-                      className="flex-1"
-                      maxLength={500}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={startRecording}
-                      disabled={isSending}
-                      title="تسجيل رسالة صوتية"
-                    >
-                      <Mic className="h-4 w-4" />
-                    </Button>
-                    <Button type="submit" disabled={!newMessage.trim() || isSending}>
-                      {isSending ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </form>
+                  <div>
+                    {selectedFile && (
+                      <div className="flex items-center gap-2 mb-2 p-2 bg-muted/50 rounded-lg">
+                        {filePreview ? (
+                          <img src={filePreview} alt="معاينة" className="h-12 w-12 object-cover rounded" />
+                        ) : (
+                          <FileText className="h-8 w-8 text-muted-foreground" />
+                        )}
+                        <span className="text-sm truncate flex-1">{selectedFile.name}</span>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={clearSelectedFile}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                    <form onSubmit={sendMessage} className="flex gap-2">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="اكتب رسالتك هنا..."
+                        disabled={isSending}
+                        className="flex-1"
+                        maxLength={500}
+                      />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*,.pdf,.doc,.docx,.txt,.zip"
+                        onChange={handleFileSelect}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSending}
+                        title="إرفاق ملف أو صورة"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={startRecording}
+                        disabled={isSending}
+                        title="تسجيل رسالة صوتية"
+                      >
+                        <Mic className="h-4 w-4" />
+                      </Button>
+                      <Button type="submit" disabled={(!newMessage.trim() && !selectedFile) || isSending}>
+                        {isSending ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </form>
+                  </div>
                 )}
               </div>
             </CardContent>
