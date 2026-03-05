@@ -73,8 +73,51 @@ export default function CommunityPage() {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
-  // Categories for filter (example)
-  const categories = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات"]
+  // Sorting tabs (content type)
+  const sortingTabs = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات"]
+
+  // Category & subcategory filter state
+  const [mainCategories, setMainCategories] = useState<string[]>([])
+  const [selectedMainCategory, setSelectedMainCategory] = useState("all")
+  const [subcategories, setSubcategories] = useState<string[]>([])
+  const [selectedSubcategory, setSelectedSubcategory] = useState("all")
+
+  // Fetch main categories from DB
+  useEffect(() => {
+    const fetchMainCategories = async () => {
+      const { data } = await supabase
+        .from("topic_categories")
+        .select("name")
+        .order("created_at", { ascending: true })
+      if (data) {
+        setMainCategories(data.map((c) => c.name))
+      }
+    }
+    fetchMainCategories()
+  }, [])
+
+  // Fetch subcategories when main category changes
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      if (selectedMainCategory === "all") {
+        setSubcategories([])
+        setSelectedSubcategory("all")
+        return
+      }
+      const { data } = await supabase
+        .from("topic_subcategories")
+        .select("name")
+        .eq("category_name", selectedMainCategory)
+        .order("created_at", { ascending: true })
+      if (data && data.length > 0) {
+        setSubcategories(data.map((s) => s.name))
+      } else {
+        setSubcategories([])
+      }
+      setSelectedSubcategory("all")
+    }
+    fetchSubcategories()
+  }, [selectedMainCategory])
 
   useEffect(() => {
     if (selectedCategory === "أسئلة") {
@@ -100,7 +143,7 @@ export default function CommunityPage() {
   // Reset to page 1 when category or tab changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedCategory, activeTab])
+  }, [selectedCategory, activeTab, selectedMainCategory, selectedSubcategory])
 
   // Debounce search query to avoid too many API calls
   useEffect(() => {
@@ -119,7 +162,7 @@ export default function CommunityPage() {
     } else {
       fetchTopics()
     }
-  }, [selectedCategory, activeTab, currentPage, debouncedSearchQuery])
+  }, [selectedCategory, activeTab, currentPage, debouncedSearchQuery, selectedMainCategory, selectedSubcategory])
 
   const fetchTopics = async () => {
     setIsLoading(true)
@@ -130,6 +173,12 @@ export default function CommunityPage() {
 
       if (selectedCategory !== "all" && selectedCategory !== "أسئلة") {
         countQuery = countQuery.eq("sorting", selectedCategory)
+      }
+      if (selectedMainCategory !== "all") {
+        countQuery = countQuery.eq("category", selectedMainCategory)
+      }
+      if (selectedSubcategory !== "all") {
+        countQuery = countQuery.eq("subcategory", selectedSubcategory)
       }
 
       // Add search filter to count query (search in title OR content)
@@ -159,6 +208,12 @@ export default function CommunityPage() {
 
       if (selectedCategory !== "all" && selectedCategory !== "أسئلة") {
         query = query.eq("sorting", selectedCategory)
+      }
+      if (selectedMainCategory !== "all") {
+        query = query.eq("category", selectedMainCategory)
+      }
+      if (selectedSubcategory !== "all") {
+        query = query.eq("subcategory", selectedSubcategory)
       }
 
       // Add search filter to data query (search in title OR content)
@@ -558,18 +613,65 @@ export default function CommunityPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        {/* Sorting filter */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-2 no-scrollbar">
-          {categories.map((category) => (
+          {sortingTabs.map((tab) => (
             <Badge
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
+              key={tab}
+              variant={selectedCategory === tab ? "default" : "outline"}
               className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory(tab)}
             >
-              {category === "all" ? "جميع المواضيع" : category}
+              {tab === "all" ? "جميع المواضيع" : tab}
             </Badge>
           ))}
         </div>
+
+        {/* Main category filter */}
+        {mainCategories.length > 0 && (
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-2 no-scrollbar">
+            <Badge
+              variant={selectedMainCategory === "all" ? "default" : "outline"}
+              className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap bg-primary/10 hover:bg-primary/20"
+              onClick={() => setSelectedMainCategory("all")}
+            >
+              جميع الفئات
+            </Badge>
+            {mainCategories.map((cat) => (
+              <Badge
+                key={cat}
+                variant={selectedMainCategory === cat ? "default" : "outline"}
+                className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap"
+                onClick={() => setSelectedMainCategory(cat)}
+              >
+                {cat}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        {/* Subcategory filter */}
+        {subcategories.length > 0 && (
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-2 no-scrollbar">
+            <Badge
+              variant={selectedSubcategory === "all" ? "default" : "outline"}
+              className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap bg-purple-500/10 hover:bg-purple-500/20 text-purple-600"
+              onClick={() => setSelectedSubcategory("all")}
+            >
+              جميع الفرعية
+            </Badge>
+            {subcategories.map((sub) => (
+              <Badge
+                key={sub}
+                variant={selectedSubcategory === sub ? "default" : "outline"}
+                className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap"
+                onClick={() => setSelectedSubcategory(sub)}
+              >
+                {sub}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Tabs Section */}
