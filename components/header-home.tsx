@@ -24,36 +24,44 @@ export function HeaderHome() {
         </MotionLink>
         <nav className="hidden md:flex space-x-6 rtl:space-x-reverse">
           <MotionLink
-            href="/"
+            href="/#offerings"
             className="text-gray-600 hover:text-primary transition-colors duration-300 ease-in-out"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            الرئيسية
+            ماذا نقدم
           </MotionLink>
           <MotionLink
-            href="/#services"
+            href="/#packages"
             className="text-gray-600 hover:text-primary transition-colors duration-300 ease-in-out"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            خدماتنا
+            الباقات
           </MotionLink>
           <MotionLink
-            href="/#community"
+            href="/#pricing"
             className="text-gray-600 hover:text-primary transition-colors duration-300 ease-in-out"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            المجتمع
+            الأسعار
           </MotionLink>
           <MotionLink
-            href="/#contact"
+            href="/#testimonials"
             className="text-gray-600 hover:text-primary transition-colors duration-300 ease-in-out"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            تواصل معنا
+            آراء الأمهات
+          </MotionLink>
+          <MotionLink
+            href="/#faq"
+            className="text-gray-600 hover:text-primary transition-colors duration-300 ease-in-out"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            أسئلة شائعة
           </MotionLink>
         </nav>
         <div className="flex items-center space-x-4 rtl:space-x-reverse">

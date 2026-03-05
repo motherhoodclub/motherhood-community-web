@@ -536,7 +536,7 @@ export default function Home() {
         </section>
 
         {/* ========== 10) Testimonials ========== */}
-        <section className="py-20 bg-white">
+        <section id="testimonials" className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <Badge className="mb-4 px-3 py-1 bg-secondary/20 text-primary rounded-full">آراء الأمهات</Badge>
@@ -571,7 +571,7 @@ export default function Home() {
         <PricingSection />
 
         {/* ========== 12) FAQ ========== */}
-        <section className="py-20 bg-white">
+        <section id="faq" className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <Badge className="mb-4 px-3 py-1 bg-secondary/20 text-primary rounded-full">أسئلة شائعة</Badge>
