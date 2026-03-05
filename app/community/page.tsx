@@ -757,14 +757,9 @@ export default function CommunityPage() {
                                 </div>
 
                                 {/* Topic excerpt/preview with better formatting */}
-                                {!isQuestion && item.excerpt && (
+                                {(item.excerpt || item.content) && (
                                   <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed text-right">
-                                    {item.excerpt}
-                                  </p>
-                                )}
-                                {isQuestion && item.content && (
-                                  <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed text-right">
-                                    {item.content}
+                                    {item.excerpt || (item.content.length > 150 ? item.content.slice(0, 150) + "..." : item.content)}
                                   </p>
                                 )}
                               </div>
