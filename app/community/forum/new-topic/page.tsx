@@ -34,6 +34,12 @@ export default function NewTopic() {
     fetchCategories()
   }, [])
 
+  const [content, setContent] = useState("")
+  const [category, setCategory] = useState("")
+  const [subcategory, setSubcategory] = useState("")
+  const [subcategories, setSubcategories] = useState<string[]>([])
+  const [tags, setTags] = useState("")
+
   useEffect(() => {
     const fetchSubcategories = async () => {
       if (!category) {
@@ -55,12 +61,6 @@ export default function NewTopic() {
     }
     fetchSubcategories()
   }, [category])
-
-  const [content, setContent] = useState("")
-  const [category, setCategory] = useState("")
-  const [subcategory, setSubcategory] = useState("")
-  const [subcategories, setSubcategories] = useState<string[]>([])
-  const [tags, setTags] = useState("")
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
   const [error, setError] = useState("")
