@@ -94,7 +94,7 @@ export default function RootLayout({
           href="https://api.whatsapp.com/send/?phone=9647731145363&text&type=phone_number&app_absent=0"
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#1ebe57] text-white p-3 rounded-full shadow-lg transition-transform duration-300 hover:scale-110"
+          className="fixed bottom-6 left-6 z-50 bg-[#25D366] hover:bg-[#1ebe57] text-white p-3 rounded-full shadow-lg transition-transform duration-300 hover:scale-110"
           aria-label="تواصل عبر واتساب"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
