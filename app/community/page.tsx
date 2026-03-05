@@ -714,6 +714,14 @@ export default function CommunityPage() {
                                       {item.category}
                                     </Badge>
                                   )}
+                                  {!isQuestion && item.subcategory && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs px-3 py-1 rounded-full font-medium bg-purple-500/10 text-purple-600 border-none"
+                                    >
+                                      {item.subcategory}
+                                    </Badge>
+                                  )}
                                   {isQuestion && (
                                     <Badge
                                       variant="secondary"

@@ -22,7 +22,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 // Icons
 import { ArrowRight, Save, Trash, Loader2 } from "lucide-react"
 
-const categories = ["الحمل والولادة", "تربية الأطفال", "الصحة والتغذية", "النمو والتطور", "الدعم النفسي", "أخرى"]
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "بدون تصنيف"]
 const ageGroups = ["عمر من صفر لسنتين", "سنتين ل 6 سنوات", "6-14 سنة"]
 
@@ -32,6 +31,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
     title: "",
     content: "",
     category: "",
+    subcategory: "",
     age_group: "",
     featured_image_url: null,
     media_urls: [],
@@ -40,6 +40,8 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
     is_hot: false,
     sorting: "",
   })
+  const [categories, setCategories] = useState<string[]>([])
+  const [subcategories, setSubcategories] = useState<string[]>([])
   const [currentTag, setCurrentTag] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -59,7 +61,37 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     checkAdminStatus()
     fetchTopic()
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("topic_categories")
+        .select("name")
+        .order("created_at", { ascending: true })
+      if (data) {
+        setCategories(data.map((c) => c.name))
+      }
+    }
+    fetchCategories()
   }, [])
+
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      if (!topic.category) {
+        setSubcategories([])
+        return
+      }
+      const { data } = await supabase
+        .from("topic_subcategories")
+        .select("name")
+        .eq("category_name", topic.category)
+        .order("created_at", { ascending: true })
+      if (data) {
+        setSubcategories(data.map((s) => s.name))
+      } else {
+        setSubcategories([])
+      }
+    }
+    fetchSubcategories()
+  }, [topic.category])
 
   const checkAdminStatus = async () => {
     try {
@@ -117,6 +149,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
           title: data.title || "",
           content: data.content || "",
           category: data.category || "",
+          subcategory: data.subcategory || "",
           age_group: data.age_group || "",
           featured_image_url: data.featured_image_url,
           media_urls: data.media_urls || [],
@@ -162,7 +195,11 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
   }
 
   const handleCategoryChange = (value: string) => {
-    setTopic((prev) => ({ ...prev, category: value }))
+    setTopic((prev) => ({ ...prev, category: value, subcategory: "" }))
+  }
+
+  const handleSubcategoryChange = (value: string) => {
+    setTopic((prev) => ({ ...prev, subcategory: value }))
   }
 
   const handleSortingChange = (value: string) => {
@@ -325,6 +362,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
           title: topic.title,
           content: topic.content,
           category: topic.category,
+          subcategory: topic.subcategory || null,
           age_group: topic.age_group,
           sorting: topic.sorting,
           is_hot: topic.is_hot,
@@ -479,6 +517,24 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {subcategories.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="subcategory">الفئة الفرعية</Label>
+                  <Select value={topic.subcategory || ""} onValueChange={handleSubcategoryChange}>
+                    <SelectTrigger id="subcategory" className="text-right">
+                      <SelectValue placeholder="اختر الفئة الفرعية (اختياري)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((sub) => (
+                        <SelectItem key={sub} value={sub}>
+                          {sub}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="sorting">التصنيف</Label>

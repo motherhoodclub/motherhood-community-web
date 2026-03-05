@@ -136,6 +136,7 @@ export function TopicControl() {
             <TableHead>العنوان</TableHead>
             <TableHead>الكاتب</TableHead>
             <TableHead>الفئة</TableHead>
+            <TableHead>الفئة الفرعية</TableHead>
             <TableHead>التصنيف</TableHead>
             <TableHead>تاريخ النشر</TableHead>
             <TableHead>مثبت</TableHead>
@@ -150,6 +151,13 @@ export function TopicControl() {
               <TableCell>
                 {topic.category ? (
                   <Badge variant="outline" className="text-xs">{topic.category}</Badge>
+                ) : (
+                  <span className="text-gray-400 text-xs">—</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {topic.subcategory ? (
+                  <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">{topic.subcategory}</Badge>
                 ) : (
                   <span className="text-gray-400 text-xs">—</span>
                 )}

@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
-import { Trash2, Plus } from "lucide-react"
+import { Trash2, Plus, ChevronDown, ChevronLeft } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,14 @@ export function CategoryManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState<any>(null)
   const [topicCount, setTopicCount] = useState(0)
+  const [deleteType, setDeleteType] = useState<"category" | "subcategory">("category")
+  const [subcategoryToDelete, setSubcategoryToDelete] = useState<any>(null)
+
+  // Subcategory state
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [subcategories, setSubcategories] = useState<Record<string, any[]>>({})
+  const [newSubcategoryName, setNewSubcategoryName] = useState("")
+
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
@@ -50,6 +59,29 @@ export function CategoryManagement() {
       setCategories(data || [])
     }
     setIsLoading(false)
+  }
+
+  const fetchSubcategories = async (categoryName: string) => {
+    const { data, error } = await supabase
+      .from("topic_subcategories")
+      .select("*")
+      .eq("category_name", categoryName)
+      .order("created_at", { ascending: true })
+
+    if (!error && data) {
+      setSubcategories((prev) => ({ ...prev, [categoryName]: data }))
+    }
+  }
+
+  const toggleExpand = (categoryName: string) => {
+    if (expandedCategory === categoryName) {
+      setExpandedCategory(null)
+      setNewSubcategoryName("")
+    } else {
+      setExpandedCategory(categoryName)
+      setNewSubcategoryName("")
+      fetchSubcategories(categoryName)
+    }
   }
 
   const addCategory = async () => {
@@ -83,8 +115,38 @@ export function CategoryManagement() {
     }
   }
 
-  const confirmDelete = async (category: any) => {
-    // Check how many topics use this category
+  const addSubcategory = async (categoryName: string) => {
+    if (!newSubcategoryName.trim()) return
+
+    const { error } = await supabase
+      .from("topic_subcategories")
+      .insert({ name: newSubcategoryName.trim(), category_name: categoryName })
+
+    if (error) {
+      if (error.code === "23505") {
+        toast({
+          title: "خطأ",
+          description: "هذه الفئة الفرعية موجودة بالفعل",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "خطأ",
+          description: "فشل في إضافة الفئة الفرعية",
+          variant: "destructive",
+        })
+      }
+    } else {
+      setNewSubcategoryName("")
+      fetchSubcategories(categoryName)
+      toast({
+        title: "تم بنجاح",
+        description: "تمت إضافة الفئة الفرعية",
+      })
+    }
+  }
+
+  const confirmDeleteCategory = async (category: any) => {
     const { count } = await supabase
       .from("topics")
       .select("id", { count: "exact", head: true })
@@ -92,32 +154,60 @@ export function CategoryManagement() {
 
     setTopicCount(count || 0)
     setCategoryToDelete(category)
+    setDeleteType("category")
     setDeleteDialogOpen(true)
   }
 
-  const deleteCategory = async () => {
-    if (!categoryToDelete) return
+  const confirmDeleteSubcategory = async (subcategory: any) => {
+    const { count } = await supabase
+      .from("topics")
+      .select("id", { count: "exact", head: true })
+      .eq("subcategory", subcategory.name)
 
-    const { error } = await supabase
-      .from("topic_categories")
-      .delete()
-      .eq("id", categoryToDelete.id)
+    setTopicCount(count || 0)
+    setSubcategoryToDelete(subcategory)
+    setDeleteType("subcategory")
+    setDeleteDialogOpen(true)
+  }
 
-    if (error) {
-      toast({
-        title: "خطأ",
-        description: "فشل في حذف الفئة",
-        variant: "destructive",
-      })
-    } else {
-      fetchCategories()
-      toast({
-        title: "تم بنجاح",
-        description: "تم حذف الفئة",
-      })
+  const handleDelete = async () => {
+    if (deleteType === "category" && categoryToDelete) {
+      const { error } = await supabase
+        .from("topic_categories")
+        .delete()
+        .eq("id", categoryToDelete.id)
+
+      if (error) {
+        toast({ title: "خطأ", description: "فشل في حذف الفئة", variant: "destructive" })
+      } else {
+        // Also delete subcategories of this category
+        await supabase
+          .from("topic_subcategories")
+          .delete()
+          .eq("category_name", categoryToDelete.name)
+
+        fetchCategories()
+        if (expandedCategory === categoryToDelete.name) {
+          setExpandedCategory(null)
+        }
+        toast({ title: "تم بنجاح", description: "تم حذف الفئة" })
+      }
+    } else if (deleteType === "subcategory" && subcategoryToDelete) {
+      const { error } = await supabase
+        .from("topic_subcategories")
+        .delete()
+        .eq("id", subcategoryToDelete.id)
+
+      if (error) {
+        toast({ title: "خطأ", description: "فشل في حذف الفئة الفرعية", variant: "destructive" })
+      } else {
+        if (expandedCategory) fetchSubcategories(expandedCategory)
+        toast({ title: "تم بنجاح", description: "تم حذف الفئة الفرعية" })
+      }
     }
     setDeleteDialogOpen(false)
     setCategoryToDelete(null)
+    setSubcategoryToDelete(null)
   }
 
   return (
@@ -142,6 +232,7 @@ export function CategoryManagement() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead></TableHead>
             <TableHead>اسم الفئة</TableHead>
             <TableHead>تاريخ الإنشاء</TableHead>
             <TableHead>الإجراءات</TableHead>
@@ -150,33 +241,110 @@ export function CategoryManagement() {
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-8">
+              <TableCell colSpan={4} className="text-center py-8">
                 جاري التحميل...
               </TableCell>
             </TableRow>
           ) : categories.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-8">
+              <TableCell colSpan={4} className="text-center py-8">
                 لا توجد فئات. أضف فئة جديدة.
               </TableCell>
             </TableRow>
           ) : (
             categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell>
-                  {new Date(category.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => confirmDelete(category)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </TableCell>
-              </TableRow>
+              <>
+                <TableRow key={category.id} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleExpand(category.name)}>
+                  <TableCell className="w-8">
+                    {expandedCategory === category.name ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {category.name}
+                    {subcategories[category.name]?.length > 0 && (
+                      <Badge variant="secondary" className="mr-2 text-xs">
+                        {subcategories[category.name].length} فرعية
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(category.created_at).toLocaleDateString("ar-SA-u-ca-gregory")}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        confirmDeleteCategory(category)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+
+                {/* Expanded subcategories section */}
+                {expandedCategory === category.name && (
+                  <TableRow key={`${category.id}-sub`}>
+                    <TableCell colSpan={4} className="bg-muted/20 p-4">
+                      <div className="space-y-3 pr-6">
+                        <p className="text-sm font-medium text-muted-foreground">الفئات الفرعية لـ &quot;{category.name}&quot;</p>
+
+                        {/* Add subcategory input */}
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="اسم الفئة الفرعية الجديدة..."
+                            value={newSubcategoryName}
+                            onChange={(e) => setNewSubcategoryName(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && addSubcategory(category.name)}
+                            className="max-w-xs h-8 text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => addSubcategory(category.name)}
+                            disabled={!newSubcategoryName.trim()}
+                          >
+                            <Plus className="h-3 w-3 ml-1" />
+                            إضافة
+                          </Button>
+                        </div>
+
+                        {/* Subcategories list */}
+                        {(!subcategories[category.name] || subcategories[category.name].length === 0) ? (
+                          <p className="text-xs text-muted-foreground">لا توجد فئات فرعية بعد.</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {subcategories[category.name].map((sub) => (
+                              <div
+                                key={sub.id}
+                                className="flex items-center justify-between py-1.5 px-3 rounded-md hover:bg-muted/50"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">↳</span>
+                                  <span className="text-sm">{sub.name}</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => confirmDeleteSubcategory(sub)}
+                                >
+                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             ))
           )}
         </TableBody>
@@ -187,18 +355,20 @@ export function CategoryManagement() {
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">
-              حذف فئة &quot;{categoryToDelete?.name}&quot;؟
+              {deleteType === "category"
+                ? `حذف فئة "${categoryToDelete?.name}"؟`
+                : `حذف فئة فرعية "${subcategoryToDelete?.name}"؟`}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-right">
               {topicCount > 0
-                ? `يوجد ${topicCount} موضوع مرتبط بهذه الفئة. لن يتم حذف المواضيع لكنها ستفقد تصنيفها.`
-                : "لا توجد مواضيع مرتبطة بهذه الفئة."}
+                ? `يوجد ${topicCount} موضوع مرتبط. لن يتم حذف المواضيع لكنها ستفقد تصنيفها.`
+                : "لا توجد مواضيع مرتبطة."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction
-              onClick={deleteCategory}
+              onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
             >
               حذف

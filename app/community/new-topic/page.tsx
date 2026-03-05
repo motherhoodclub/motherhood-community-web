@@ -20,6 +20,8 @@ export default function NewTopicPage() {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [category, setCategory] = useState("")
+  const [subcategory, setSubcategory] = useState("")
+  const [subcategories, setSubcategories] = useState<string[]>([])
   const [sorting, setSorting] = useState("")
   const [ageGroup, setAgeGroup] = useState("")
   const [categories, setCategories] = useState<string[]>([])
@@ -43,6 +45,28 @@ export default function NewTopicPage() {
     }
     fetchCategories()
   }, [])
+
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      if (!category) {
+        setSubcategories([])
+        setSubcategory("")
+        return
+      }
+      const { data } = await supabase
+        .from("topic_subcategories")
+        .select("name")
+        .eq("category_name", category)
+        .order("created_at", { ascending: true })
+      if (data) {
+        setSubcategories(data.map((s) => s.name))
+      } else {
+        setSubcategories([])
+      }
+      setSubcategory("")
+    }
+    fetchSubcategories()
+  }, [category])
 
   // Update the handleSubmit function to include the sorting field
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,6 +109,7 @@ export default function NewTopicPage() {
           title,
           content,
           category,
+          subcategory: subcategory || null,
           sorting,
           age_group: ageGroup,
           user_id: user.id,
@@ -177,6 +202,25 @@ export default function NewTopicPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {subcategories.length > 0 && (
+                <div>
+                  <Label htmlFor="subcategory" className="block text-sm font-medium text-gray-700 text-right">
+                    الفئة الفرعية
+                  </Label>
+                  <Select value={subcategory} onValueChange={setSubcategory}>
+                    <SelectTrigger id="subcategory">
+                      <SelectValue placeholder="اختاري الفئة الفرعية (اختياري)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((sub) => (
+                        <SelectItem key={sub} value={sub}>
+                          {sub}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {/* Add the new sorting field */}
               <div>
                 <Label htmlFor="sorting" className="block text-sm font-medium text-gray-700 text-right">

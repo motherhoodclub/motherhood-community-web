@@ -33,8 +33,33 @@ export default function NewTopic() {
     }
     fetchCategories()
   }, [])
+
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      if (!category) {
+        setSubcategories([])
+        setSubcategory("")
+        return
+      }
+      const { data } = await supabase
+        .from("topic_subcategories")
+        .select("name")
+        .eq("category_name", category)
+        .order("created_at", { ascending: true })
+      if (data) {
+        setSubcategories(data.map((s) => s.name))
+      } else {
+        setSubcategories([])
+      }
+      setSubcategory("")
+    }
+    fetchSubcategories()
+  }, [category])
+
   const [content, setContent] = useState("")
   const [category, setCategory] = useState("")
+  const [subcategory, setSubcategory] = useState("")
+  const [subcategories, setSubcategories] = useState<string[]>([])
   const [tags, setTags] = useState("")
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
@@ -111,6 +136,23 @@ export default function NewTopic() {
                 </SelectContent>
               </Select>
             </div>
+            {subcategories.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="subcategory">الفئة الفرعية</Label>
+                <Select value={subcategory} onValueChange={setSubcategory}>
+                  <SelectTrigger id="subcategory">
+                    <SelectValue placeholder="اختاري الفئة الفرعية (اختياري)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories.map((sub) => (
+                      <SelectItem key={sub} value={sub}>
+                        {sub}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="tags">الوسوم</Label>
               <Input
