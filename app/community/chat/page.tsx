@@ -152,12 +152,13 @@ export default function ChatPage() {
               is_admin
             )
           `)
-          .order("created_at", { ascending: true })
+          .order("created_at", { ascending: false })
           .limit(100)
 
         if (error) throw error
-        console.log("[Chat] Fetched messages:", data?.length, "- sample image_url:", data?.find((m: any) => m.image_url)?.image_url || "none")
-        setMessages(data || [])
+        const sorted = (data || []).reverse()
+        console.log("[Chat] Fetched messages:", sorted.length, "- sample image_url:", sorted.find((m: any) => m.image_url)?.image_url || "none")
+        setMessages(sorted)
       } catch (error) {
         console.error("[Chat] Error fetching messages:", error)
         toast({

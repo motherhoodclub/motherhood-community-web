@@ -159,11 +159,11 @@ export default function FloatingChat() {
               is_admin
             )
           `)
-          .order("created_at", { ascending: true })
+          .order("created_at", { ascending: false })
           .limit(100)
 
         if (messagesError) throw messagesError
-        setMessages(messagesData || [])
+        setMessages((messagesData || []).reverse())
 
         // Fetch initial online users
         const { data: presenceData, error: presenceError } = await supabase
