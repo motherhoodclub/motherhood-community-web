@@ -49,6 +49,12 @@ export default function CommunityPage() {
   const initialTab = searchParams.get("tab") || "newest"
   const initialCategory = searchParams.get("category") || "all"
 
+  // Sorting tabs (content type)
+  const sortingTabs = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات"]
+
+  // If the URL category param is not a sorting tab, treat it as a main category
+  const isMainCategoryFromUrl = initialCategory !== "all" && !sortingTabs.includes(initialCategory)
+
   const [activeTab, setActiveTab] = useState(initialTab)
   const [topics, setTopics] = useState([])
   const [questions, setQuestions] = useState([])
@@ -72,12 +78,6 @@ export default function CommunityPage() {
 
   const supabase = createClientComponentClient()
   const { toast } = useToast()
-
-  // Sorting tabs (content type)
-  const sortingTabs = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات"]
-
-  // If the URL category param is not a sorting tab, treat it as a main category
-  const isMainCategoryFromUrl = initialCategory !== "all" && !sortingTabs.includes(initialCategory)
 
   // Category & subcategory filter state
   const [mainCategories, setMainCategories] = useState<string[]>([])
