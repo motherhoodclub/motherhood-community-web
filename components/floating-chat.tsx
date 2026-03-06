@@ -807,8 +807,8 @@ export default function FloatingChat() {
                                   مشرف
                                 </Badge>
                               )}
-                              {/* Admin actions */}
-                              {isAdmin && message.user_id !== user.id && (
+                              {/* Message actions: own messages or admin */}
+                              {(message.user_id === user.id || isAdmin) && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button
@@ -833,19 +833,21 @@ export default function FloatingChat() {
                                       <Trash2 className="h-3 w-3 ml-1" />
                                       حذف الرسالة
                                     </DropdownMenuItem>
-                                    {!bannedUsers.includes(message.user_id) ? (
-                                      <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive text-xs"
-                                        onClick={() => setBanConfirm({ open: true, userId: message.user_id, username: message.user_profiles?.username || "مستخدم" })}
-                                      >
-                                        <Ban className="h-3 w-3 ml-1" />
-                                        حظر
-                                      </DropdownMenuItem>
-                                    ) : (
-                                      <DropdownMenuItem className="text-xs" onClick={() => unbanUser(message.user_id)}>
-                                        <ShieldAlert className="h-3 w-3 ml-1" />
-                                        رفع الحظر
-                                      </DropdownMenuItem>
+                                    {isAdmin && message.user_id !== user.id && (
+                                      !bannedUsers.includes(message.user_id) ? (
+                                        <DropdownMenuItem
+                                          className="text-destructive focus:text-destructive text-xs"
+                                          onClick={() => setBanConfirm({ open: true, userId: message.user_id, username: message.user_profiles?.username || "مستخدم" })}
+                                        >
+                                          <Ban className="h-3 w-3 ml-1" />
+                                          حظر
+                                        </DropdownMenuItem>
+                                      ) : (
+                                        <DropdownMenuItem className="text-xs" onClick={() => unbanUser(message.user_id)}>
+                                          <ShieldAlert className="h-3 w-3 ml-1" />
+                                          رفع الحظر
+                                        </DropdownMenuItem>
+                                      )
                                     )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
