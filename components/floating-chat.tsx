@@ -148,6 +148,9 @@ export default function FloatingChat() {
             id,
             content,
             audio_url,
+            image_url,
+            file_url,
+            file_name,
             user_id,
             created_at,
             user_profiles (
@@ -259,7 +262,7 @@ export default function FloatingChat() {
               try {
                 const { data } = await supabase
                   .from("chat_messages")
-                  .select(`id, content, audio_url, user_id, created_at, user_profiles (username, avatar_url, is_admin)`)
+                  .select(`id, content, audio_url, image_url, file_url, file_name, user_id, created_at, user_profiles (username, avatar_url, is_admin)`)
                   .eq("id", payload.new.id)
                   .single()
                 if (data) {
