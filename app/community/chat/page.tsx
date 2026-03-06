@@ -411,22 +411,22 @@ export default function ChatPage() {
         }
       }
 
-      const insertPayload = {
+      const insertPayload: any = {
         content: newMessage.trim() || (imageUrl ? "📷 صورة" : "📎 ملف"),
         user_id: user.id,
-        ...(imageUrl && { image_url: imageUrl }),
-        ...(fileUrl && { file_url: fileUrl }),
-        ...(fileName && { file_name: fileName }),
+        image_url: imageUrl || null,
+        file_url: fileUrl || null,
+        file_name: fileName || null,
       }
-      console.log("[Chat] Inserting message:", insertPayload)
+      console.log("[Chat] Inserting message:", JSON.stringify(insertPayload))
 
-      const { error } = await supabase.from("chat_messages").insert(insertPayload)
+      const { data: insertedData, error } = await supabase.from("chat_messages").insert(insertPayload).select("id, image_url, file_url, file_name").single()
 
       if (error) {
         console.error("[Chat] Insert error:", error)
         throw error
       }
-      console.log("[Chat] Message sent successfully")
+      console.log("[Chat] Message saved - DB returned:", JSON.stringify(insertedData))
       setNewMessage("")
       clearSelectedFile()
     } catch (error) {

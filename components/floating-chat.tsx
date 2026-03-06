@@ -437,15 +437,22 @@ export default function FloatingChat() {
         }
       }
 
-      const { error } = await supabase.from("chat_messages").insert({
+      const insertPayload: any = {
         content: newMessage.trim() || (imageUrl ? "📷 صورة" : "📎 ملف"),
         user_id: user.id,
-        ...(imageUrl && { image_url: imageUrl }),
-        ...(fileUrl && { file_url: fileUrl }),
-        ...(fileName && { file_name: fileName }),
-      })
+        image_url: imageUrl || null,
+        file_url: fileUrl || null,
+        file_name: fileName || null,
+      }
+      console.log("[FloatingChat] Inserting message:", JSON.stringify(insertPayload))
 
-      if (error) throw error
+      const { data: insertedData, error } = await supabase.from("chat_messages").insert(insertPayload).select("id, image_url, file_url, file_name").single()
+
+      if (error) {
+        console.error("[FloatingChat] Insert error:", error)
+        throw error
+      }
+      console.log("[FloatingChat] Message saved - DB returned:", JSON.stringify(insertedData))
       setNewMessage("")
       clearSelectedFile()
     } catch (error) {
