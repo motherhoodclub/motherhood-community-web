@@ -156,9 +156,10 @@ export default function ChatPage() {
           .limit(100)
 
         if (error) throw error
+        console.log("[Chat] Fetched messages:", data?.length, "- sample image_url:", data?.find((m: any) => m.image_url)?.image_url || "none")
         setMessages(data || [])
       } catch (error) {
-        console.error("Error fetching messages:", error)
+        console.error("[Chat] Error fetching messages:", error)
         toast({
           title: "خطأ",
           description: "فشل في تحميل الرسائل",
@@ -248,6 +249,7 @@ export default function ChatPage() {
               .eq("id", payload.new.id)
               .single()
 
+            console.log("[Chat] Realtime INSERT received:", { id: data?.id, image_url: data?.image_url, file_url: data?.file_url })
             if (data) {
               setMessages((prev) => [...prev, data])
             }
@@ -388,13 +390,18 @@ export default function ChatPage() {
       if (selectedFile) {
         const ext = selectedFile.name.split(".").pop()
         const path = `chat-files/${user.id}-${Date.now()}.${ext}`
+        console.log("[Chat] Uploading file:", { name: selectedFile.name, type: selectedFile.type, path })
         const { error: uploadError } = await supabase.storage
           .from("uploads")
           .upload(path, selectedFile, { contentType: selectedFile.type })
 
-        if (uploadError) throw uploadError
+        if (uploadError) {
+          console.error("[Chat] Upload error:", uploadError)
+          throw uploadError
+        }
 
         const { data: urlData } = supabase.storage.from("uploads").getPublicUrl(path)
+        console.log("[Chat] Public URL:", urlData.publicUrl)
 
         if (selectedFile.type.startsWith("image/")) {
           imageUrl = urlData.publicUrl
@@ -404,15 +411,22 @@ export default function ChatPage() {
         }
       }
 
-      const { error } = await supabase.from("chat_messages").insert({
+      const insertPayload = {
         content: newMessage.trim() || (imageUrl ? "📷 صورة" : "📎 ملف"),
         user_id: user.id,
         ...(imageUrl && { image_url: imageUrl }),
         ...(fileUrl && { file_url: fileUrl }),
         ...(fileName && { file_name: fileName }),
-      })
+      }
+      console.log("[Chat] Inserting message:", insertPayload)
 
-      if (error) throw error
+      const { error } = await supabase.from("chat_messages").insert(insertPayload)
+
+      if (error) {
+        console.error("[Chat] Insert error:", error)
+        throw error
+      }
+      console.log("[Chat] Message sent successfully")
       setNewMessage("")
       clearSelectedFile()
     } catch (error) {
