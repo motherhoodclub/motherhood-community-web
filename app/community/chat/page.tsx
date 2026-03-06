@@ -77,6 +77,7 @@ export default function ChatPage() {
   const [editContent, setEditContent] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -870,13 +871,12 @@ export default function ChatPage() {
                                     </div>
                                   ) : message.image_url ? (
                                     <div className="space-y-1">
-                                      <a href={message.image_url} target="_blank" rel="noopener noreferrer">
-                                        <img
-                                          src={message.image_url}
-                                          alt="صورة"
-                                          className="max-h-48 max-w-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                        />
-                                      </a>
+                                      <img
+                                        src={message.image_url}
+                                        alt="صورة"
+                                        className="max-h-48 max-w-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={() => setPreviewImage(message.image_url)}
+                                      />
                                       {message.content && message.content !== "📷 صورة" && (
                                         <p>{message.content}</p>
                                       )}
@@ -1143,6 +1143,27 @@ export default function ChatPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image preview modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            onClick={() => setPreviewImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img
+            src={previewImage}
+            alt="معاينة الصورة"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
