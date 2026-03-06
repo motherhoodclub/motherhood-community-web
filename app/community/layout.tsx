@@ -801,7 +801,7 @@ export default function CommunityLayout({
                 <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
                   تصنيفات المواضيع
                 </h3>
-                <div className="space-y-2">
+                <div className="max-h-[280px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                   {categories.map((category) => (
                     <Link
                       key={category.name}
@@ -827,16 +827,16 @@ export default function CommunityLayout({
                       </span>
                     </Link>
                   ))}
-                  <Link
-                    href="/community?category=all"
-                    className={cn(
-                      "block text-center text-xs py-1.5 rounded-lg transition-colors",
-                      isDarkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700",
-                    )}
-                  >
-                    عرض الكل
-                  </Link>
                 </div>
+                <Link
+                  href="/community?category=all"
+                  className={cn(
+                    "block text-center text-xs py-1.5 mt-1 rounded-lg transition-colors",
+                    isDarkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700",
+                  )}
+                >
+                  عرض الكل
+                </Link>
               </div>
 
               <div>
@@ -1302,32 +1302,34 @@ export default function CommunityLayout({
           <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
             تصنيفات المواضيع
           </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {categories.map((category) => (
-              <Link
-                key={category.name}
-                href={`/community?category=${encodeURIComponent(category.name)}`}
-                className={cn(
-                  "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
-                  isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg group-hover:scale-110 transition-transform duration-200">
-                    {category.icon}
+          <div className="max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
+            <div className="grid grid-cols-2 gap-2">
+              {categories.map((category) => (
+                <Link
+                  key={category.name}
+                  href={`/community?category=${encodeURIComponent(category.name)}`}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
+                    isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                      {category.icon}
+                    </span>
+                    <span className={cn("text-xs truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                      {category.name}
+                    </span>
+                  </div>
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded-full",
+                    isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500",
+                  )}>
+                    {category.count}
                   </span>
-                  <span className={cn("text-xs truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                    {category.name}
-                  </span>
-                </div>
-                <span className={cn(
-                  "text-xs px-1.5 py-0.5 rounded-full",
-                  isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500",
-                )}>
-                  {category.count}
-                </span>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
           <Link
             href="/community?category=all"
