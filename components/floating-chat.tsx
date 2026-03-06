@@ -228,6 +228,9 @@ export default function FloatingChat() {
                     id,
                     content,
                     audio_url,
+                    image_url,
+                    file_url,
+                    file_name,
                     user_id,
                     created_at,
                     user_profiles (
