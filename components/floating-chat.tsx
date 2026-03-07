@@ -627,12 +627,19 @@ export default function FloatingChat() {
 
   const deleteMessage = async (messageId: string) => {
     try {
-      const { error } = await supabase.from("chat_messages").delete().eq("id", messageId)
+      console.log("[FloatingChat] Deleting message:", messageId, "user:", user?.id)
+      const { data, error } = await supabase.from("chat_messages").delete().eq("id", messageId).select("id")
+      console.log("[FloatingChat] Delete result:", { data, error })
       if (error) throw error
-      setMessages((prev) => prev.filter((m) => m.id !== messageId))
-      toast({ title: "تم", description: "تم حذف الرسالة بنجاح" })
+      if (!data || data.length === 0) {
+        console.error("[FloatingChat] Delete returned 0 rows - RLS may have blocked it")
+        toast({ title: "خطأ", description: "ليس لديك صلاحية حذف هذه الرسالة", variant: "destructive" })
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== messageId))
+        toast({ title: "تم", description: "تم حذف الرسالة بنجاح" })
+      }
     } catch (error) {
-      console.error("Error deleting message:", error)
+      console.error("[FloatingChat] Error deleting message:", error)
       toast({ title: "خطأ", description: "فشل في حذف الرسالة", variant: "destructive" })
     }
     setDeleteConfirm({ open: false, messageId: null })

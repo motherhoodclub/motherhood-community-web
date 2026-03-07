@@ -615,15 +615,23 @@ export default function ChatPage() {
 
   const deleteMessage = async (messageId: string) => {
     try {
-      const { error } = await supabase
+      console.log("[Chat] Deleting message:", messageId, "user:", user?.id)
+      const { data, error } = await supabase
         .from("chat_messages")
         .delete()
         .eq("id", messageId)
+        .select("id")
+      console.log("[Chat] Delete result:", { data, error })
       if (error) throw error
-      setMessages((prev) => prev.filter((m) => m.id !== messageId))
-      toast({ title: "تم", description: "تم حذف الرسالة بنجاح" })
+      if (!data || data.length === 0) {
+        console.error("[Chat] Delete returned 0 rows - RLS may have blocked it")
+        toast({ title: "خطأ", description: "ليس لديك صلاحية حذف هذه الرسالة", variant: "destructive" })
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== messageId))
+        toast({ title: "تم", description: "تم حذف الرسالة بنجاح" })
+      }
     } catch (error) {
-      console.error("Error deleting message:", error)
+      console.error("[Chat] Error deleting message:", error)
       toast({ title: "خطأ", description: "فشل في حذف الرسالة", variant: "destructive" })
     }
     setDeleteConfirm({ open: false, messageId: null })
