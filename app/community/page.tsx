@@ -630,51 +630,6 @@ export default function CommunityPage() {
           ))}
         </div>
 
-        {/* Main category filter */}
-        {mainCategories.length > 0 && (
-          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-2 no-scrollbar">
-            <Badge
-              variant={selectedMainCategory === "all" ? "default" : "outline"}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap bg-primary/10 hover:bg-primary/20"
-              onClick={() => setSelectedMainCategory("all")}
-            >
-              جميع الفئات
-            </Badge>
-            {mainCategories.map((cat) => (
-              <Badge
-                key={cat}
-                variant={selectedMainCategory === cat ? "default" : "outline"}
-                className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap"
-                onClick={() => setSelectedMainCategory(cat)}
-              >
-                {cat}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        {/* Subcategory filter */}
-        {subcategories.length > 0 && (
-          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-2 no-scrollbar">
-            <Badge
-              variant={selectedSubcategory === "all" ? "default" : "outline"}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap bg-purple-500/10 hover:bg-purple-500/20 text-purple-600"
-              onClick={() => setSelectedSubcategory("all")}
-            >
-              جميع الفرعية
-            </Badge>
-            {subcategories.map((sub) => (
-              <Badge
-                key={sub}
-                variant={selectedSubcategory === sub ? "default" : "outline"}
-                className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap"
-                onClick={() => setSelectedSubcategory(sub)}
-              >
-                {sub}
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Tabs Section */}
