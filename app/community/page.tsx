@@ -42,6 +42,7 @@ import {
   HelpCircle,
   Loader2,
   Trash2,
+  FolderOpen,
 } from "lucide-react"
 
 export default function CommunityPage() {
@@ -50,7 +51,7 @@ export default function CommunityPage() {
   const initialCategory = searchParams.get("category") || "all"
 
   // Sorting tabs (content type)
-  const sortingTabs = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات"]
+  const sortingTabs = ["all", "دروس", "أسئلة", "مشاريع", "نقاشات", "مجموعات"]
 
   // If the URL category param is not a sorting tab, treat it as a main category
   const isMainCategoryFromUrl = initialCategory !== "all" && !sortingTabs.includes(initialCategory)
@@ -76,6 +77,10 @@ export default function CommunityPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [itemsPerPage, setItemPerPage] = useState(10)
 
+  // Collections state
+  const [collections, setCollections] = useState<any[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false)
+
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
@@ -98,6 +103,24 @@ export default function CommunityPage() {
     }
     fetchMainCategories()
   }, [])
+
+  // Fetch collections when مجموعات tab is selected
+  useEffect(() => {
+    if (selectedCategory !== "مجموعات") return
+    const fetchCollections = async () => {
+      setIsLoadingCollections(true)
+      const { data } = await supabase
+        .from("collections")
+        .select("*, collection_topics(count)")
+        .order("display_order", { ascending: true })
+
+      if (data) {
+        setCollections(data)
+      }
+      setIsLoadingCollections(false)
+    }
+    fetchCollections()
+  }, [selectedCategory])
 
   // Fetch subcategories when main category changes
   useEffect(() => {
@@ -160,6 +183,7 @@ export default function CommunityPage() {
 
   // Add a new useEffect to refetch topics when selectedCategory, activeTab, currentPage, or search changes
   useEffect(() => {
+    if (selectedCategory === "مجموعات") return
     if (selectedCategory === "أسئلة") {
       fetchQuestions()
     } else {
@@ -607,31 +631,106 @@ export default function CommunityPage() {
 
       {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="ابحث في العناوين والمحتوى..."
-            className="pr-10 text-sm sm:text-base"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        {selectedCategory !== "مجموعات" && (
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="ابحث في العناوين والمحتوى..."
+              className="pr-10 text-sm sm:text-base"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
         {/* Sorting filter */}
-        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-2 no-scrollbar">
+        <div className="flex gap-1 sm:gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
           {sortingTabs.map((tab) => (
             <Badge
               key={tab}
               variant={selectedCategory === tab ? "default" : "outline"}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-xs sm:text-sm whitespace-nowrap"
+              className="px-2 py-1 sm:px-2.5 sm:py-1.5 cursor-pointer text-[10px] sm:text-xs whitespace-nowrap"
               onClick={() => setSelectedCategory(tab)}
             >
-              {tab === "all" ? "جميع المواضيع" : tab}
+              {tab === "all" ? "الكل" : tab}
             </Badge>
           ))}
         </div>
 
       </div>
 
+      {/* Collections View */}
+      {selectedCategory === "مجموعات" ? (
+        <div>
+          {isLoadingCollections ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <Skeleton className="h-36 w-full" />
+                  <CardContent className="p-4 space-y-2">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : collections.length === 0 ? (
+            <Card className="border-dashed bg-muted/20">
+              <CardContent className="text-center py-12">
+                <FolderOpen className="mx-auto h-12 w-12 mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">لا توجد مجموعات</h3>
+                <p className="text-muted-foreground">لم يتم إنشاء مجموعات بعد</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {collections.map((col) => (
+                <motion.div key={col.id} variants={itemVariants} transition={{ duration: 0.3 }}>
+                  <Link href={`/community/collection/${col.id}`}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 border-muted/60 hover:border-primary/40 group cursor-pointer h-full">
+                      {/* Cover image */}
+                      <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-gradient-to-bl from-primary/20 via-primary/10 to-transparent">
+                        {col.cover_image_url ? (
+                          <img
+                            src={col.cover_image_url}
+                            alt={col.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <FolderOpen className="h-12 w-12 text-primary/30" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        <div className="absolute bottom-3 right-3 left-3">
+                          <h3 className="text-white font-bold text-base sm:text-lg line-clamp-1">{col.name}</h3>
+                        </div>
+                      </div>
+                      <CardContent className="p-3 sm:p-4">
+                        {col.description && (
+                          <p className="text-muted-foreground text-xs sm:text-sm line-clamp-2 mb-2 text-right">
+                            {col.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="text-xs">
+                            {col.collection_topics?.[0]?.count || 0} موضوع
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      ) : (
+      <>
       {/* Tabs Section */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4 sm:mb-6 bg-muted/60 p-1 rounded-full w-full sm:w-auto overflow-x-auto no-scrollbar">
@@ -965,6 +1064,8 @@ export default function CommunityPage() {
           )}
         </TabsContent>
       </Tabs>
+      </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

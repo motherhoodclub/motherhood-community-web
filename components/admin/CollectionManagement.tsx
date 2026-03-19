@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
-import { Trash2, Plus, ChevronDown, ChevronLeft, Pencil, Search, X } from "lucide-react"
+import { Trash2, Plus, ChevronDown, ChevronLeft, Pencil, Search, X, ImagePlus } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -40,8 +40,12 @@ export function CollectionManagement() {
     id: null as string | null,
     name: "",
     description: "",
+    cover_image_url: "",
     display_order: 0,
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -78,8 +82,27 @@ export function CollectionManagement() {
   }
 
   const resetForm = () => {
-    setCurrentCollection({ id: null, name: "", description: "", display_order: 0 })
+    setCurrentCollection({ id: null, name: "", description: "", cover_image_url: "", display_order: 0 })
     setIsEditing(false)
+    setImageFile(null)
+    setImagePreview(null)
+  }
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append("file", file)
+    const response = await fetch("/api/admin/upload", { method: "POST", body: formData })
+    if (!response.ok) throw new Error("Failed to upload image")
+    const data = await response.json()
+    return data.url
+  }
+
+  const handleImageChange = (e: any) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      setImagePreview(URL.createObjectURL(file))
+    }
   }
 
   const openCreateDialog = () => {
@@ -92,58 +115,72 @@ export function CollectionManagement() {
       id: collection.id,
       name: collection.name,
       description: collection.description || "",
+      cover_image_url: collection.cover_image_url || "",
       display_order: collection.display_order || 0,
     })
+    setImageFile(null)
+    setImagePreview(collection.cover_image_url || null)
     setIsEditing(true)
     setIsDialogOpen(true)
   }
 
   const handleSave = async () => {
     if (!currentCollection.name.trim()) return
+    setIsSaving(true)
 
-    if (isEditing && currentCollection.id) {
-      const { error } = await supabase
-        .from("collections")
-        .update({
-          name: currentCollection.name.trim(),
-          description: currentCollection.description.trim() || null,
-          display_order: currentCollection.display_order,
-        })
-        .eq("id", currentCollection.id)
-
-      if (error) {
-        toast({
-          title: "خطأ",
-          description: error.code === "23505" ? "هذا الاسم موجود بالفعل" : "فشل في تعديل المجموعة",
-          variant: "destructive",
-        })
-      } else {
-        toast({ title: "تم بنجاح", description: "تم تعديل المجموعة" })
-        setIsDialogOpen(false)
-        resetForm()
-        fetchCollections()
+    try {
+      let coverUrl = currentCollection.cover_image_url || null
+      if (imageFile) {
+        coverUrl = await uploadImage(imageFile)
       }
-    } else {
-      const { error } = await supabase
-        .from("collections")
-        .insert({
-          name: currentCollection.name.trim(),
-          description: currentCollection.description.trim() || null,
-          display_order: currentCollection.display_order,
-        })
 
-      if (error) {
-        toast({
-          title: "خطأ",
-          description: error.code === "23505" ? "هذا الاسم موجود بالفعل" : "فشل في إضافة المجموعة",
-          variant: "destructive",
-        })
-      } else {
-        toast({ title: "تم بنجاح", description: "تمت إضافة المجموعة" })
-        setIsDialogOpen(false)
-        resetForm()
-        fetchCollections()
+      const payload = {
+        name: currentCollection.name.trim(),
+        description: currentCollection.description.trim() || null,
+        cover_image_url: coverUrl,
+        display_order: currentCollection.display_order,
       }
+
+      if (isEditing && currentCollection.id) {
+        const { error } = await supabase
+          .from("collections")
+          .update(payload)
+          .eq("id", currentCollection.id)
+
+        if (error) {
+          toast({
+            title: "خطأ",
+            description: error.code === "23505" ? "هذا الاسم موجود بالفعل" : "فشل في تعديل المجموعة",
+            variant: "destructive",
+          })
+        } else {
+          toast({ title: "تم بنجاح", description: "تم تعديل المجموعة" })
+          setIsDialogOpen(false)
+          resetForm()
+          fetchCollections()
+        }
+      } else {
+        const { error } = await supabase
+          .from("collections")
+          .insert(payload)
+
+        if (error) {
+          toast({
+            title: "خطأ",
+            description: error.code === "23505" ? "هذا الاسم موجود بالفعل" : "فشل في إضافة المجموعة",
+            variant: "destructive",
+          })
+        } else {
+          toast({ title: "تم بنجاح", description: "تمت إضافة المجموعة" })
+          setIsDialogOpen(false)
+          resetForm()
+          fetchCollections()
+        }
+      }
+    } catch {
+      toast({ title: "خطأ", description: "فشل في رفع الصورة", variant: "destructive" })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -507,6 +544,33 @@ export function CollectionManagement() {
               />
             </div>
             <div className="space-y-2">
+              <Label>صورة الغلاف</Label>
+              <div className="flex items-center gap-3">
+                {imagePreview ? (
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border">
+                    <img src={imagePreview} alt="غلاف" className="w-full h-full object-cover" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-0 left-0 h-6 w-6 p-0 bg-black/50 hover:bg-black/70 text-white rounded-none rounded-br-lg"
+                      onClick={() => {
+                        setImageFile(null)
+                        setImagePreview(null)
+                        setCurrentCollection((prev: any) => ({ ...prev, cover_image_url: "" }))
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center w-20 h-20 rounded-lg border-2 border-dashed cursor-pointer hover:border-primary/50 transition-colors">
+                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  </label>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label>ترتيب العرض</Label>
               <Input
                 type="number"
@@ -522,8 +586,8 @@ export function CollectionManagement() {
             </div>
           </div>
           <DialogFooter className="flex-row-reverse gap-2">
-            <Button onClick={handleSave} disabled={!currentCollection.name.trim()}>
-              {isEditing ? "حفظ التعديلات" : "إضافة"}
+            <Button onClick={handleSave} disabled={!currentCollection.name.trim() || isSaving}>
+              {isSaving ? "جاري الحفظ..." : isEditing ? "حفظ التعديلات" : "إضافة"}
             </Button>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               إلغاء
