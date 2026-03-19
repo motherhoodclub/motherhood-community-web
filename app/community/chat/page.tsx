@@ -548,9 +548,11 @@ export default function ChatPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  const playAudio = (messageId: string, audioUrl: string) => {
+  const playAudio = async (messageId: string, audioUrl: string) => {
     if (audioRef.current) {
       audioRef.current.pause()
+      audioRef.current.src = ""
+      audioRef.current = null
     }
 
     if (playingAudioId === messageId) {
@@ -558,13 +560,53 @@ export default function ChatPage() {
       return
     }
 
-    const audio = new Audio(audioUrl)
-    audioRef.current = audio
-    audio.play()
-    setPlayingAudioId(messageId)
+    try {
+      const audio = new Audio()
+      audio.crossOrigin = "anonymous"
+      audio.preload = "auto"
 
-    audio.onended = () => {
+      // For .m4a files from mobile app, explicitly hint the type
+      if (audioUrl.includes(".m4a")) {
+        const source = document.createElement("source")
+        source.src = audioUrl
+        source.type = "audio/mp4"
+        audio.appendChild(source)
+      } else if (audioUrl.includes(".webm")) {
+        const source = document.createElement("source")
+        source.src = audioUrl
+        source.type = "audio/webm"
+        audio.appendChild(source)
+      } else {
+        audio.src = audioUrl
+      }
+
+      audioRef.current = audio
+      setPlayingAudioId(messageId)
+
+      audio.onended = () => {
+        setPlayingAudioId(null)
+      }
+
+      audio.onerror = () => {
+        console.error("Audio playback error for:", audioUrl)
+        setPlayingAudioId(null)
+        toast({
+          title: "خطأ",
+          description: "فشل في تشغيل الرسالة الصوتية",
+          variant: "destructive",
+        })
+      }
+
+      await audio.load()
+      await audio.play()
+    } catch (error) {
+      console.error("Error playing audio:", error)
       setPlayingAudioId(null)
+      toast({
+        title: "خطأ",
+        description: "فشل في تشغيل الرسالة الصوتية",
+        variant: "destructive",
+      })
     }
   }
 
