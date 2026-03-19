@@ -13,21 +13,44 @@ import { Icons } from "@/components/ui/icons"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ChevronDown, ChevronUp, Mail } from "lucide-react"
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [loadingProvider, setLoadingProvider] = useState<string | null>(null)
   const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [name, setName] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
-  const [isRegistered, setIsRegistered] = useState<boolean>(false) // For email registration flow
+  const [isRegistered, setIsRegistered] = useState<boolean>(false)
+  const [showEmailForm, setShowEmailForm] = useState(false)
   const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
+  async function handleOAuth(provider: "google" | "apple") {
+    setLoadingProvider(provider)
+    setIsLoading(true)
+    setError(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    if (error) {
+      setIsLoading(false)
+      setLoadingProvider(null)
+      const providerName = provider === "google" ? "Google" : "Apple"
+      setError(`حدث خطأ أثناء التسجيل باستخدام ${providerName}`)
+      toast({ variant: "destructive", title: `خطأ ${providerName}`, description: error.message })
+    }
+  }
+
   async function handleEmailSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsLoading(true)
+    setLoadingProvider("email")
     setError(null)
 
     const { data, error: signUpError } = await supabase.auth.signUp({
@@ -42,6 +65,7 @@ export default function RegisterPage() {
     })
 
     setIsLoading(false)
+    setLoadingProvider(null)
     if (signUpError) {
       if (signUpError.message.includes("User already registered")) {
         setError("البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول أو استخدام بريد إلكتروني آخر.")
@@ -50,7 +74,7 @@ export default function RegisterPage() {
       }
       toast({ variant: "destructive", title: "خطأ في التسجيل", description: signUpError.message })
     } else if (data.user) {
-      setIsRegistered(true) // Show email confirmation message
+      setIsRegistered(true)
       toast({
         title: "تم إنشاء الحساب بنجاح",
         description: "يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك",
@@ -59,7 +83,6 @@ export default function RegisterPage() {
   }
 
   if (isRegistered) {
-    // This state is for email registration confirmation
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -87,102 +110,127 @@ export default function RegisterPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">إنشاء حساب</CardTitle>
-        <CardDescription>أدخلي بياناتك لإنشاء حساب جديد</CardDescription>
+        <CardDescription>اختاري طريقة إنشاء حسابك</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         {error && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-2">
             <AlertTitle>خطأ</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-right block">
-              الاسم
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              required
-              className="text-right"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isLoading}
-            />
+
+        {/* Google Button - Primary */}
+        <Button
+          className="w-full h-12 text-base"
+          type="button"
+          onClick={() => handleOAuth("google")}
+          disabled={isLoading}
+        >
+          {loadingProvider === "google" ? (
+            <Icons.spinner className="ml-2 h-5 w-5 animate-spin" />
+          ) : (
+            <Icons.google className="ml-2 h-5 w-5" />
+          )}
+          التسجيل باستخدام Google
+        </Button>
+
+        {/* Apple Button */}
+        <Button
+          variant="outline"
+          className="w-full h-12 text-base bg-black text-white hover:bg-gray-900 hover:text-white border-black"
+          type="button"
+          onClick={() => handleOAuth("apple")}
+          disabled={isLoading}
+        >
+          {loadingProvider === "apple" ? (
+            <Icons.spinner className="ml-2 h-5 w-5 animate-spin" />
+          ) : (
+            <Icons.apple className="ml-2 h-5 w-5" />
+          )}
+          التسجيل باستخدام Apple
+        </Button>
+
+        {/* Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-right block">
-              البريد الإلكتروني
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              required
-              className="text-right"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-            />
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">أو</span>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-right block">
-              كلمة المرور
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              className="text-right"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
-            إنشاء حساب بالبريد
-          </Button>
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+        </div>
+
+        {/* Expandable Email Section */}
+        <Button
+          variant="ghost"
+          type="button"
+          className="w-full text-muted-foreground hover:text-foreground"
+          onClick={() => setShowEmailForm(!showEmailForm)}
+          disabled={isLoading && loadingProvider !== "email"}
+        >
+          <Mail className="ml-2 h-4 w-4" />
+          التسجيل بالبريد الإلكتروني
+          {showEmailForm ? (
+            <ChevronUp className="mr-2 h-4 w-4" />
+          ) : (
+            <ChevronDown className="mr-2 h-4 w-4" />
+          )}
+        </Button>
+
+        {showEmailForm && (
+          <form onSubmit={handleEmailSubmit} className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-right block">
+                الاسم
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                required
+                className="text-right"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">أو</span>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-right block">
+                البريد الإلكتروني
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                required
+                className="text-right"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
-          </div>
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full"
-            onClick={async () => {
-              setIsLoading(true)
-              setError(null)
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                  redirectTo: `${window.location.origin}/auth/callback`,
-                },
-              })
-              if (error) {
-                setIsLoading(false)
-                setError("حدث خطأ أثناء التسجيل باستخدام Google")
-                toast({ variant: "destructive", title: "خطأ Google", description: error.message })
-              }
-            }}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Icons.google className="ml-2 h-4 w-4" />
-            )}
-            التسجيل باستخدام Google
-          </Button>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-right block">
+                كلمة المرور
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                className="text-right"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <Button className="w-full" type="submit" disabled={isLoading}>
+              {loadingProvider === "email" && <Icons.spinner className="ml-2 h-4 w-4 animate-spin" />}
+              إنشاء حساب
+            </Button>
+          </form>
+        )}
       </CardContent>
-      <CardFooter className="text-center">
+      <CardFooter className="flex justify-center">
         <div className="text-sm text-muted-foreground">
           لديك حساب بالفعل؟{" "}
           <Link href="/auth/login" className="text-primary hover:underline">
