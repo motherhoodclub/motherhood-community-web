@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -24,11 +24,21 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isRegistered, setIsRegistered] = useState<boolean>(false)
   const [showEmailForm, setShowEmailForm] = useState(false)
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
+  useEffect(() => {
+    const saved = localStorage.getItem("last_auth_method")
+    if (saved) {
+      setLastUsedMethod(saved)
+      if (saved === "email") setShowEmailForm(true)
+    }
+  }, [])
+
   async function handleOAuth(provider: "google" | "apple") {
+    localStorage.setItem("last_auth_method", provider)
     setLoadingProvider(provider)
     setIsLoading(true)
     setError(null)
@@ -49,6 +59,7 @@ export default function RegisterPage() {
 
   async function handleEmailSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
+    localStorage.setItem("last_auth_method", "email")
     setIsLoading(true)
     setLoadingProvider("email")
     setError(null)
@@ -121,35 +132,49 @@ export default function RegisterPage() {
         )}
 
         {/* Google Button - Primary */}
-        <Button
-          className="w-full h-12 text-base"
-          type="button"
-          onClick={() => handleOAuth("google")}
-          disabled={isLoading}
-        >
-          {loadingProvider === "google" ? (
-            <Icons.spinner className="ml-2 h-6 w-6 animate-spin" />
-          ) : (
-            <Icons.google className="ml-2 h-6 w-6" />
+        <div className="relative">
+          <Button
+            className="w-full h-12 text-base"
+            type="button"
+            onClick={() => handleOAuth("google")}
+            disabled={isLoading}
+          >
+            {loadingProvider === "google" ? (
+              <Icons.spinner className="ml-2 h-6 w-6 animate-spin" />
+            ) : (
+              <Icons.google className="ml-2 h-6 w-6" />
+            )}
+            التسجيل باستخدام Google
+          </Button>
+          {lastUsedMethod === "google" && (
+            <span className="absolute -top-2 left-2 bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">
+              آخر استخدام
+            </span>
           )}
-          التسجيل باستخدام Google
-        </Button>
+        </div>
 
         {/* Apple Button */}
-        <Button
-          variant="outline"
-          className="w-full h-12 text-base bg-black text-white hover:bg-gray-900 hover:text-white border-black"
-          type="button"
-          onClick={() => handleOAuth("apple")}
-          disabled={isLoading}
-        >
-          {loadingProvider === "apple" ? (
-            <Icons.spinner className="ml-2 h-6 w-6 animate-spin" />
-          ) : (
-            <Icons.apple className="ml-2 h-6 w-6" />
+        <div className="relative">
+          <Button
+            variant="outline"
+            className="w-full h-12 text-base bg-black text-white hover:bg-gray-900 hover:text-white border-black"
+            type="button"
+            onClick={() => handleOAuth("apple")}
+            disabled={isLoading}
+          >
+            {loadingProvider === "apple" ? (
+              <Icons.spinner className="ml-2 h-6 w-6 animate-spin" />
+            ) : (
+              <Icons.apple className="ml-2 h-6 w-6" />
+            )}
+            التسجيل باستخدام Apple
+          </Button>
+          {lastUsedMethod === "apple" && (
+            <span className="absolute -top-2 left-2 bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">
+              آخر استخدام
+            </span>
           )}
-          التسجيل باستخدام Apple
-        </Button>
+        </div>
 
         {/* Divider */}
         <div className="relative my-4">
@@ -162,21 +187,28 @@ export default function RegisterPage() {
         </div>
 
         {/* Expandable Email Section */}
-        <Button
-          variant="ghost"
-          type="button"
-          className="w-full text-muted-foreground hover:text-foreground"
-          onClick={() => setShowEmailForm(!showEmailForm)}
-          disabled={isLoading && loadingProvider !== "email"}
-        >
-          <Mail className="ml-2 h-4 w-4" />
-          التسجيل بالبريد الإلكتروني
-          {showEmailForm ? (
-            <ChevronUp className="mr-2 h-4 w-4" />
-          ) : (
-            <ChevronDown className="mr-2 h-4 w-4" />
+        <div className="relative">
+          <Button
+            variant="ghost"
+            type="button"
+            className="w-full text-muted-foreground hover:text-foreground"
+            onClick={() => setShowEmailForm(!showEmailForm)}
+            disabled={isLoading && loadingProvider !== "email"}
+          >
+            <Mail className="ml-2 h-4 w-4" />
+            التسجيل بالبريد الإلكتروني
+            {showEmailForm ? (
+              <ChevronUp className="mr-2 h-4 w-4" />
+            ) : (
+              <ChevronDown className="mr-2 h-4 w-4" />
+            )}
+          </Button>
+          {lastUsedMethod === "email" && (
+            <span className="absolute -top-2 left-2 bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">
+              آخر استخدام
+            </span>
           )}
-        </Button>
+        </div>
 
         {showEmailForm && (
           <form onSubmit={handleEmailSubmit} className="space-y-4 pt-2">
