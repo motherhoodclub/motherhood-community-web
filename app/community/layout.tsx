@@ -77,6 +77,7 @@ export default function CommunityLayout({
   const [downloadableFiles, setDownloadableFiles] = useState([])
   const [showAppBanner, setShowAppBanner] = useState(true)
   const [categories, setCategories] = useState<{ name: string; icon: string; count: number }[]>([])
+  const [collections, setCollections] = useState<{ id: string; name: string; topic_count: number }[]>([])
 
   useEffect(() => {
     const getUser = async () => {
@@ -120,6 +121,27 @@ export default function CommunityLayout({
       }
     }
     fetchCategories()
+  }, [supabase])
+
+  // Fetch collections
+  useEffect(() => {
+    const fetchCollections = async () => {
+      const { data } = await supabase
+        .from("collections")
+        .select("id, name, collection_topics(count)")
+        .order("display_order", { ascending: true })
+
+      if (data) {
+        setCollections(
+          data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            topic_count: c.collection_topics?.[0]?.count || 0,
+          }))
+        )
+      }
+    }
+    fetchCollections()
   }, [supabase])
 
   useEffect(() => {
@@ -839,6 +861,42 @@ export default function CommunityLayout({
                 </Link>
               </div>
 
+              {/* Collections */}
+              {collections.length > 0 && (
+                <div>
+                  <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
+                    المجموعات
+                  </h3>
+                  <div className="space-y-2">
+                    {collections.map((collection) => (
+                      <Link
+                        key={collection.id}
+                        href={`/community/collection/${collection.id}`}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
+                          isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                            📂
+                          </span>
+                          <span className={cn("text-xs truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                            {collection.name}
+                          </span>
+                        </div>
+                        <span className={cn(
+                          "text-xs px-1.5 py-0.5 rounded-full",
+                          isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500",
+                        )}>
+                          {collection.topic_count}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
                   الفئة العمرية
@@ -1341,6 +1399,47 @@ export default function CommunityLayout({
             عرض الكل
           </Link>
         </div>
+
+        {/* Collections (Mobile) */}
+        {collections.length > 0 && (
+          <div
+            className={cn(
+              "p-4 rounded-xl border transition-colors duration-200",
+              isDarkMode ? "bg-gray-900/50 border-gray-800" : "bg-gray-50 border-gray-200",
+            )}
+          >
+            <h3 className={cn("text-sm font-semibold mb-3", isDarkMode ? "text-gray-400" : "text-gray-600")}>
+              المجموعات
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {collections.map((collection) => (
+                <Link
+                  key={collection.id}
+                  href={`/community/collection/${collection.id}`}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
+                    isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                      📂
+                    </span>
+                    <span className={cn("text-xs truncate", isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                      {collection.name}
+                    </span>
+                  </div>
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded-full",
+                    isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500",
+                  )}>
+                    {collection.topic_count}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Age Groups */}
         <div
