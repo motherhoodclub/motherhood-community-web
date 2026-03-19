@@ -112,7 +112,7 @@ export default function LoginPage() {
         )}
 
         {/* Google Button - Primary */}
-        <div className="relative">
+        <div className="space-y-1">
           <Button
             className="w-full h-12 text-base"
             type="button"
@@ -127,14 +127,12 @@ export default function LoginPage() {
             تسجيل الدخول باستخدام Google
           </Button>
           {lastUsedMethod === "google" && (
-            <span className="absolute -top-2 left-2 bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">
-              آخر استخدام
-            </span>
+            <p className="text-[11px] text-muted-foreground text-center">استخدمته مؤخراً</p>
           )}
         </div>
 
         {/* Apple Button */}
-        <div className="relative">
+        <div className="space-y-1">
           <Button
             variant="outline"
             className="w-full h-12 text-base bg-black text-white hover:bg-gray-900 hover:text-white border-black"
@@ -150,9 +148,7 @@ export default function LoginPage() {
             تسجيل الدخول باستخدام Apple
           </Button>
           {lastUsedMethod === "apple" && (
-            <span className="absolute -top-2 left-2 bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">
-              آخر استخدام
-            </span>
+            <p className="text-[11px] text-muted-foreground text-center">استخدمته مؤخراً</p>
           )}
         </div>
 
@@ -167,7 +163,7 @@ export default function LoginPage() {
         </div>
 
         {/* Expandable Email Section */}
-        <div className="relative">
+        <div className="space-y-1">
           <Button
             variant="ghost"
             type="button"
@@ -184,9 +180,7 @@ export default function LoginPage() {
             )}
           </Button>
           {lastUsedMethod === "email" && (
-            <span className="absolute -top-2 left-2 bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20">
-              آخر استخدام
-            </span>
+            <p className="text-[11px] text-muted-foreground text-center">استخدمته مؤخراً</p>
           )}
         </div>
 
