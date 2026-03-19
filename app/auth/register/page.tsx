@@ -132,7 +132,12 @@ export default function RegisterPage() {
         )}
 
         {/* Google Button - Primary */}
-        <div className="space-y-1">
+        <div className="relative">
+          {lastUsedMethod === "google" && (
+            <span className="absolute -top-3 right-3 z-10 bg-primary text-primary-foreground text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm">
+              استخدمته مؤخراً
+            </span>
+          )}
           <Button
             className="w-full h-12 text-base"
             type="button"
@@ -146,13 +151,15 @@ export default function RegisterPage() {
             )}
             التسجيل باستخدام Google
           </Button>
-          {lastUsedMethod === "google" && (
-            <p className="text-[11px] text-muted-foreground text-center">استخدمته مؤخراً</p>
-          )}
         </div>
 
         {/* Apple Button */}
-        <div className="space-y-1">
+        <div className="relative">
+          {lastUsedMethod === "apple" && (
+            <span className="absolute -top-3 right-3 z-10 bg-primary text-primary-foreground text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm">
+              استخدمته مؤخراً
+            </span>
+          )}
           <Button
             variant="outline"
             className="w-full h-12 text-base bg-black text-white hover:bg-gray-900 hover:text-white border-black"
@@ -167,9 +174,6 @@ export default function RegisterPage() {
             )}
             التسجيل باستخدام Apple
           </Button>
-          {lastUsedMethod === "apple" && (
-            <p className="text-[11px] text-muted-foreground text-center">استخدمته مؤخراً</p>
-          )}
         </div>
 
         {/* Divider */}
@@ -183,7 +187,12 @@ export default function RegisterPage() {
         </div>
 
         {/* Expandable Email Section */}
-        <div className="space-y-1">
+        <div className="relative">
+          {lastUsedMethod === "email" && (
+            <span className="absolute -top-3 right-3 z-10 bg-primary text-primary-foreground text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm">
+              استخدمته مؤخراً
+            </span>
+          )}
           <Button
             variant="ghost"
             type="button"
@@ -199,9 +208,6 @@ export default function RegisterPage() {
               <ChevronDown className="mr-2 h-4 w-4" />
             )}
           </Button>
-          {lastUsedMethod === "email" && (
-            <p className="text-[11px] text-muted-foreground text-center">استخدمته مؤخراً</p>
-          )}
         </div>
 
         {showEmailForm && (
