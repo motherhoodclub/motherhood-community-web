@@ -108,9 +108,9 @@ export default function LoginPage() {
           disabled={isLoading}
         >
           {loadingProvider === "google" ? (
-            <Icons.spinner className="ml-2 h-5 w-5 animate-spin" />
+            <Icons.spinner className="ml-2 h-6 w-6 animate-spin" />
           ) : (
-            <Icons.google className="ml-2 h-5 w-5" />
+            <Icons.google className="ml-2 h-6 w-6" />
           )}
           تسجيل الدخول باستخدام Google
         </Button>
@@ -124,9 +124,9 @@ export default function LoginPage() {
           disabled={isLoading}
         >
           {loadingProvider === "apple" ? (
-            <Icons.spinner className="ml-2 h-5 w-5 animate-spin" />
+            <Icons.spinner className="ml-2 h-6 w-6 animate-spin" />
           ) : (
-            <Icons.apple className="ml-2 h-5 w-5" />
+            <Icons.apple className="ml-2 h-6 w-6" />
           )}
           تسجيل الدخول باستخدام Apple
         </Button>
