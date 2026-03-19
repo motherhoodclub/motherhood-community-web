@@ -805,7 +805,7 @@ export default function CommunityLayout({
                   {categories.map((category) => (
                     <Link
                       key={category.name}
-                      href={`/community?category=${encodeURIComponent(category.name)}`}
+                      href={`/community/category/${encodeURIComponent(category.name)}`}
                       className={cn(
                         "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
                         isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
@@ -829,7 +829,7 @@ export default function CommunityLayout({
                   ))}
                 </div>
                 <Link
-                  href="/community?category=all"
+                  href="/community"
                   className={cn(
                     "block text-center text-xs py-1.5 mt-1 rounded-lg transition-colors",
                     isDarkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700",
@@ -1307,7 +1307,7 @@ export default function CommunityLayout({
               {categories.map((category) => (
                 <Link
                   key={category.name}
-                  href={`/community?category=${encodeURIComponent(category.name)}`}
+                  href={`/community/category/${encodeURIComponent(category.name)}`}
                   className={cn(
                     "flex items-center justify-between rounded-lg p-2 transition-all duration-200 group",
                     isDarkMode ? "bg-gray-800/50 hover:bg-gray-700/50" : "bg-gray-100 hover:bg-gray-200",
@@ -1332,7 +1332,7 @@ export default function CommunityLayout({
             </div>
           </div>
           <Link
-            href="/community?category=all"
+            href="/community"
             className={cn(
               "block text-center text-xs py-1.5 mt-2 rounded-lg transition-colors",
               isDarkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700",
