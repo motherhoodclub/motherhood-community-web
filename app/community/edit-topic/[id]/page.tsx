@@ -12,21 +12,35 @@ import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import RichTextEditor from "@/components/rich-text-editor"
+import { isHtmlContentEmpty } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 
 // Icons
-import { ArrowRight, Save, Trash, Loader2 } from "lucide-react"
+import { ArrowRight, Save, Trash, Loader2, X } from "lucide-react"
 
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "بدون تصنيف"]
 const ageGroups = ["عمر من صفر لسنتين", "سنتين ل 6 سنوات", "6-14 سنة"]
 
 export default function EditTopicPage({ params }: { params: { id: string } }) {
-  const [topic, setTopic] = useState({
+  const [topic, setTopic] = useState<{
+    id: string
+    title: string
+    content: string
+    category: string
+    subcategory: string
+    age_group: string
+    featured_image_url: string | null
+    media_urls: string[]
+    tags: string[]
+    is_sticky: boolean
+    is_hot: boolean
+    sorting: string
+  }>({
     id: "",
     title: "",
     content: "",
@@ -48,9 +62,9 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
   const [isUploading, setIsUploading] = useState(false)
   const [featuredImage, setFeaturedImage] = useState<File | null>(null)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [previewFeaturedImage, setPreviewFeaturedImage] = useState("")
-  const [previewMediaUrls, setPreviewMediaUrls] = useState<string[]>([])
   const [updateStatus, setUpdateStatus] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
 
@@ -159,18 +173,11 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
           sorting: data.sorting || "",
         })
 
-        // Set preview images
+        // Set preview image for the featured image
         if (data.featured_image_url) {
           setPreviewFeaturedImage(
             `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${data.featured_image_url}`,
           )
-        }
-
-        if (data.media_urls && data.media_urls.length > 0) {
-          const mediaUrlPreviews = data.media_urls.map(
-            (url) => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${url}`,
-          )
-          setPreviewMediaUrls(mediaUrlPreviews)
         }
       }
     } catch (error) {
@@ -225,14 +232,32 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
 
   const handleMediaFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files)
-      setMediaFiles(files)
-
-      // Create preview URLs
-      const previewUrls = files.map((file) => URL.createObjectURL(file))
-      setPreviewMediaUrls(previewUrls)
+      const newFiles = Array.from(e.target.files)
+      setMediaFiles((prev) => [...prev, ...newFiles])
+      setMediaPreviews((prev) => [...prev, ...newFiles.map((file) => URL.createObjectURL(file))])
+      // Reset so selecting the same file again still fires onChange
+      e.target.value = ""
     }
   }
+
+  const handleRemoveExistingMedia = (index: number) => {
+    setTopic((prev) => ({
+      ...prev,
+      media_urls: prev.media_urls.filter((_, i) => i !== index),
+    }))
+  }
+
+  const handleRemoveNewMediaFile = (index: number) => {
+    URL.revokeObjectURL(mediaPreviews[index])
+    setMediaFiles((prev) => prev.filter((_, i) => i !== index))
+    setMediaPreviews((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const getStorageUrl = (path: string) =>
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${path}`
+
+  const isVideoPath = (path: string) =>
+    ["mp4", "webm", "ogg", "mov", "m4v", "mkv"].includes(path.split(".").pop()?.toLowerCase() || "")
 
   const handleAddTag = () => {
     if (currentTag && !topic.tags.includes(currentTag)) {
@@ -276,10 +301,9 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
         setUploadProgress(50)
       }
 
-      // Upload new media files if selected
+      // Upload new media files if selected (appended to the kept existing media)
       if (mediaFiles.length > 0) {
         setUpdateStatus("جاري رفع الوسائط المتعددة...")
-        mediaUrls = [] // Replace existing media
 
         let progress = 50
         const progressIncrement = 50 / mediaFiles.length
@@ -319,6 +343,15 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
       toast({
         title: "غير مصرح",
         description: "ليس لديك صلاحية تعديل المواضيع",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (isHtmlContentEmpty(topic.content)) {
+      toast({
+        title: "خطأ",
+        description: "الرجاء كتابة محتوى الموضوع",
         variant: "destructive",
       })
       return
@@ -492,13 +525,10 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
 
               <div className="space-y-2">
                 <Label htmlFor="content">محتوى الموضوع</Label>
-                <Textarea
-                  id="content"
-                  name="content"
+                <RichTextEditor
                   value={topic.content}
-                  onChange={handleInputChange}
-                  required
-                  className="text-right min-h-[200px]"
+                  onChange={(html) => setTopic((prev) => ({ ...prev, content: html }))}
+                  placeholder="اكتب محتوى الموضوع هنا... يمكنك تنسيق النص وإضافة صور وفيديوهات وروابط"
                 />
               </div>
 
@@ -613,7 +643,7 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="media_files">الوسائط المتعددة</Label>
+                <Label htmlFor="media_files">الوسائط المتعددة (صور أو فيديوهات)</Label>
                 <Input
                   id="media_files"
                   type="file"
@@ -621,17 +651,61 @@ export default function EditTopicPage({ params }: { params: { id: string } }) {
                   onChange={handleMediaFilesChange}
                   multiple
                 />
-                {previewMediaUrls.length > 0 && (
+                {(topic.media_urls.length > 0 || mediaFiles.length > 0) && (
                   <div className="mt-2">
                     <p className="text-sm text-muted-foreground mb-1">معاينة الوسائط:</p>
                     <div className="grid grid-cols-3 gap-2">
-                      {previewMediaUrls.map((url, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={url || "/placeholder.svg"}
-                            alt={`معاينة الوسائط ${index + 1}`}
-                            className="h-24 w-full object-cover rounded-md border"
-                          />
+                      {/* Existing media already saved on the topic */}
+                      {topic.media_urls.map((path, index) => (
+                        <div key={`existing-${index}`} className="relative">
+                          {isVideoPath(path) ? (
+                            <video
+                              src={getStorageUrl(path)}
+                              className="h-24 w-full object-cover rounded-md border"
+                            />
+                          ) : (
+                            <img
+                              src={getStorageUrl(path)}
+                              alt={`وسائط ${index + 1}`}
+                              className="h-24 w-full object-cover rounded-md border"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingMedia(index)}
+                            className="absolute top-1 left-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                            aria-label="إزالة الملف"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {/* Newly selected media, not yet uploaded */}
+                      {mediaFiles.map((file, index) => (
+                        <div key={`new-${index}`} className="relative">
+                          {file.type.startsWith("video/") ? (
+                            <video
+                              src={mediaPreviews[index]}
+                              className="h-24 w-full object-cover rounded-md border"
+                            />
+                          ) : (
+                            <img
+                              src={mediaPreviews[index]}
+                              alt={`وسائط جديدة ${index + 1}`}
+                              className="h-24 w-full object-cover rounded-md border"
+                            />
+                          )}
+                          <span className="absolute bottom-1 right-1 rounded bg-green-600 px-1 text-[10px] text-white">
+                            جديد
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNewMediaFile(index)}
+                            className="absolute top-1 left-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                            aria-label="إزالة الملف"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                       ))}
                     </div>

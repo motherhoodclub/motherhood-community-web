@@ -27,6 +27,8 @@ import {
 import { ShareButton } from "@/components/share-button"
 import Link from "next/link"
 import { formatArabicDateTime } from "@/lib/date-utils"
+import SafeHtml from "@/components/safe-html"
+import MediaCarousel from "@/components/media-carousel"
 
 interface Comment {
   id: number
@@ -496,37 +498,6 @@ export default function TopicPage({ params }: { params: { id: string } }) {
     setImageError(true)
   }
 
-  const renderMediaContent = (mediaUrl: string) => {
-    const fileExtension = mediaUrl.split(".").pop()?.toLowerCase()
-    const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(fileExtension || "")
-    const isVideo = ["mp4", "webm", "ogg"].includes(fileExtension || "")
-
-    if (isImage) {
-      return (
-        <div className="relative">
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${mediaUrl}?t=${new Date().getTime()}`}
-            alt="Topic media"
-            className="max-w-full h-auto mb-4 rounded-lg"
-            onError={handleImageError}
-          />
-        </div>
-      )
-    } else if (isVideo) {
-      return (
-        <video
-          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${mediaUrl}?t=${new Date().getTime()}`}
-          controls
-          className="max-w-full h-auto mb-4 rounded-lg"
-        >
-          Your browser does not support the video tag.
-        </video>
-      )
-    } else {
-      return <p>Unsupported media type: {mediaUrl}</p>
-    }
-  }
-
   const renderLoomEmbed = (embedCode: string) => {
     if (!embedCode) return null
 
@@ -794,21 +765,13 @@ export default function TopicPage({ params }: { params: { id: string } }) {
             </div>
           )}
 
-          <p className="text-base sm:text-lg mb-4 break-words">{topic.content}</p>
+          <SafeHtml html={topic.content} className="text-base sm:text-lg mb-4" />
 
           {/* Loom Video Embed */}
           {topic.loom_embed_code && renderLoomEmbed(topic.loom_embed_code)}
 
-          {/* Media Content */}
-          {topic.media_urls && topic.media_urls.length > 0 && (
-            <div className="mt-6 space-y-4">
-              {topic.media_urls.map((mediaUrl, index) => (
-                <div key={index} className="mb-4">
-                  {renderMediaContent(mediaUrl)}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Media gallery (carousel) */}
+          {topic.media_urls && topic.media_urls.length > 0 && <MediaCarousel urls={topic.media_urls} />}
 
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-3">
             <span className="flex items-center">

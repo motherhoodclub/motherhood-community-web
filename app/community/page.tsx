@@ -5,6 +5,7 @@ import Link from "next/link"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { motion } from "framer-motion"
 import { useToast } from "@/components/ui/use-toast"
+import { isVideoUrl } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
 import { formatArabicDate } from "@/lib/date-utils"
 
@@ -832,7 +833,7 @@ export default function CommunityPage() {
                                 ) : item.media_urls && item.media_urls.length > 0 ? (
                                   item.media_urls.map((mediaUrl, index) => (
                                     <div key={index} className="absolute inset-0">
-                                      {mediaUrl.endsWith(".mp4") ? (
+                                      {isVideoUrl(mediaUrl) ? (
                                         <video
                                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/uploads/${mediaUrl}`}
                                           className="w-full h-full object-cover"

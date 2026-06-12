@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import ProtectedRoute from "@/components/protected-route"
 import { Badge } from "@/components/ui/badge"
+import { X } from "lucide-react"
+import RichTextEditor from "@/components/rich-text-editor"
+import { isHtmlContentEmpty } from "@/lib/utils"
 
 const sortingOptions = ["دروس", "أسئلة", "مشاريع", "نقاشات"]
 const ageGroups = ["عمر من صفر لسنتين", "سنتين ل 6 سنوات", "6-14 سنة"]
@@ -27,6 +30,7 @@ export default function NewTopicPage() {
   const [categories, setCategories] = useState<string[]>([])
   const [featuredImage, setFeaturedImage] = useState<File | null>(null)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [currentTag, setCurrentTag] = useState("")
   const [loomEmbedCode, setLoomEmbedCode] = useState("")
@@ -71,6 +75,12 @@ export default function NewTopicPage() {
   // Update the handleSubmit function to include the sorting field
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isHtmlContentEmpty(content)) {
+      alert("الرجاء كتابة محتوى الموضوع")
+      return
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -135,9 +145,19 @@ export default function NewTopicPage() {
   }
 
   const handleMediaFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setMediaFiles(Array.from(e.target.files))
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files)
+      setMediaFiles((prev) => [...prev, ...newFiles])
+      setMediaPreviews((prev) => [...prev, ...newFiles.map((file) => URL.createObjectURL(file))])
+      // Reset so selecting the same file again still fires onChange
+      e.target.value = ""
     }
+  }
+
+  const handleRemoveMediaFile = (index: number) => {
+    URL.revokeObjectURL(mediaPreviews[index])
+    setMediaFiles((prev) => prev.filter((_, i) => i !== index))
+    setMediaPreviews((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleAddTag = () => {
@@ -176,13 +196,11 @@ export default function NewTopicPage() {
                 <Label htmlFor="content" className="block text-sm font-medium text-gray-700 text-right">
                   محتوى الموضوع
                 </Label>
-                <Textarea
-                  id="content"
+                <RichTextEditor
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  required
-                  className="mt-1 text-right"
-                  rows={5}
+                  onChange={setContent}
+                  placeholder="اكتبي محتوى الموضوع هنا... يمكنك تنسيق النص وإضافة صور وفيديوهات وروابط"
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -309,6 +327,34 @@ export default function NewTopicPage() {
                   multiple
                   className="mt-1"
                 />
+                {mediaFiles.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    {mediaFiles.map((file, index) => (
+                      <div key={index} className="relative">
+                        {file.type.startsWith("video/") ? (
+                          <video
+                            src={mediaPreviews[index]}
+                            className="h-24 w-full object-cover rounded-md border"
+                          />
+                        ) : (
+                          <img
+                            src={mediaPreviews[index]}
+                            alt={`معاينة ${index + 1}`}
+                            className="h-24 w-full object-cover rounded-md border"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMediaFile(index)}
+                          className="absolute top-1 left-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                          aria-label="إزالة الملف"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="loom-embed" className="block text-sm font-medium text-gray-700 text-right">
