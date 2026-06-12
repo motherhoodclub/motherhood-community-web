@@ -21,10 +21,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
+    // Validate client-supplied values. Amount/currency come straight from the
+    // client, so guard against price manipulation (e.g. paying 1 cent) and
+    // unexpected currencies. Stripe amounts are integers in the smallest unit.
+    const ALLOWED_CURRENCIES = ["usd", "sar", "aed", "egp", "eur", "gbp"]
+    const MIN_AMOUNT = 100 // smallest unit (e.g. 1.00)
+    const MAX_AMOUNT = 1_000_000 // smallest unit (e.g. 10,000.00)
+
+    if (typeof amount !== "number" || !Number.isInteger(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
+      return NextResponse.json({ message: "Invalid amount" }, { status: 400 })
+    }
+
+    if (typeof currency !== "string" || !ALLOWED_CURRENCIES.includes(currency.toLowerCase())) {
+      return NextResponse.json({ message: "Invalid currency" }, { status: 400 })
+    }
+
     // Create a payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
-      currency,
+      currency: currency.toLowerCase(),
       metadata: {
         userId: user.id,
       },

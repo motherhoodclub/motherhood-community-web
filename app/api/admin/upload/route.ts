@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { requireAdmin } from "@/lib/admin-auth"
 
 // Initialize Supabase client with service role for admin access
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(request: Request) {
   try {
+    // Only admins may upload (this route uses the service-role key)
+    const auth = await requireAdmin()
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
+    }
+
     const formData = await request.formData()
     const file = formData.get("file") as File
 

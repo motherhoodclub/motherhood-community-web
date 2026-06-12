@@ -40,6 +40,14 @@ export async function GET(request: Request) {
 
     console.log("Processing for user:", user.id)
 
+    // Ensure the checkout session actually belongs to the requesting user.
+    // The session is created with metadata.userId in /api/create-checkout-session.
+    // Without this check, a user could pass any completed session_id and grant
+    // themselves a subscription off someone else's payment.
+    if (session.metadata?.userId !== user.id) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    }
+
     // If the session is completed, update the user's subscription
     if (session.status === "complete") {
       if (session.mode === "subscription" && session.subscription) {
