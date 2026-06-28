@@ -44,6 +44,7 @@ import {
   Loader2,
   Trash2,
   FolderOpen,
+  BarChart3,
 } from "lucide-react"
 
 export default function CommunityPage() {
@@ -866,6 +867,15 @@ export default function CommunityPage() {
                               <div className="space-y-3">
                                 {/* Category badges on top */}
                                 <div className="flex flex-wrap gap-2 mb-2 justify-end">
+                                  {!isQuestion && item.poll_id && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs px-3 py-1 rounded-full font-medium bg-primary/10 text-primary border-none flex items-center gap-1"
+                                    >
+                                      <BarChart3 className="h-3 w-3" />
+                                      استطلاع
+                                    </Badge>
+                                  )}
                                   {!isQuestion && item.category && (
                                     <Badge
                                       variant="secondary"

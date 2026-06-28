@@ -34,6 +34,10 @@ export default function NewTopicPage() {
   const [tags, setTags] = useState<string[]>([])
   const [currentTag, setCurrentTag] = useState("")
   const [loomEmbedCode, setLoomEmbedCode] = useState("")
+  // Optional poll attached to the topic
+  const [pollEnabled, setPollEnabled] = useState(false)
+  const [pollQuestion, setPollQuestion] = useState("")
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""])
   const router = useRouter()
   const supabase = createClientComponentClient()
 
@@ -113,6 +117,26 @@ export default function NewTopicPage() {
         }
       }
 
+      // Optionally create a poll first and attach it to the topic.
+      let pollId: string | null = null
+      if (pollEnabled) {
+        const cleanOptions = pollOptions.map((o) => o.trim()).filter(Boolean)
+        if (!pollQuestion.trim() || cleanOptions.length < 2) {
+          alert("لإنشاء استطلاع، أدخل سؤالاً وخيارين على الأقل")
+          return
+        }
+        const { data: newPollId, error: pollError } = await supabase.rpc("create_poll", {
+          p_question: pollQuestion.trim(),
+          p_options: cleanOptions,
+        })
+        if (pollError || !newPollId) {
+          console.error("Error creating poll:", pollError)
+          alert("تعذّر إنشاء الاستطلاع")
+          return
+        }
+        pollId = newPollId as string
+      }
+
       const { data, error } = await supabase
         .from("topics")
         .insert({
@@ -127,6 +151,7 @@ export default function NewTopicPage() {
           media_urls: mediaUrls,
           tags,
           loom_embed_code: loomEmbedCode, // Add this line
+          poll_id: pollId,
         })
         .select()
 
@@ -372,6 +397,72 @@ export default function NewTopicPage() {
                   يمكنك نسخ رمز التضمين من Loom بالضغط على زر "Share" ثم "Embed"
                 </p>
               </div>
+
+              {/* Optional poll */}
+              <div className="rounded-lg border p-4 space-y-3" dir="rtl">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm font-medium">نشر كاستطلاع</span>
+                  <input
+                    type="checkbox"
+                    checked={pollEnabled}
+                    onChange={(e) => setPollEnabled(e.target.checked)}
+                    className="h-4 w-4 accent-primary"
+                  />
+                </label>
+
+                {pollEnabled && (
+                  <div className="space-y-3 border-t pt-3">
+                    <div>
+                      <Label className="block text-sm font-medium mb-1">سؤال الاستطلاع</Label>
+                      <Textarea
+                        value={pollQuestion}
+                        onChange={(e) => setPollQuestion(e.target.value)}
+                        placeholder="اكتب سؤال الاستطلاع…"
+                        rows={2}
+                        className="text-right"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="block text-sm font-medium">الخيارات</Label>
+                      {pollOptions.map((opt, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Input
+                            value={opt}
+                            onChange={(e) =>
+                              setPollOptions((prev) =>
+                                prev.map((o, idx) => (idx === i ? e.target.value : o)),
+                              )
+                            }
+                            placeholder={`الخيار ${i + 1}`}
+                            className="text-right"
+                          />
+                          {pollOptions.length > 2 && (
+                            <button
+                              type="button"
+                              className="text-red-500 text-sm"
+                              onClick={() =>
+                                setPollOptions((prev) => prev.filter((_, idx) => idx !== i))
+                              }
+                            >
+                              حذف
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {pollOptions.length < 6 && (
+                        <button
+                          type="button"
+                          className="text-sm text-primary hover:underline"
+                          onClick={() => setPollOptions((prev) => [...prev, ""])}
+                        >
+                          + إضافة خيار
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Button type="submit" className="w-full">
                 نشر الموضوع
               </Button>

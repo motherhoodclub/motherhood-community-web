@@ -31,6 +31,9 @@ import {
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
+import { PollCard } from "@/components/poll-card"
+import { CreatePollDialog } from "@/components/create-poll-dialog"
+import { BarChart3 } from "lucide-react"
 
 interface Message {
   id: string
@@ -39,6 +42,7 @@ interface Message {
   image_url?: string
   file_url?: string
   file_name?: string
+  poll_id?: string | null
   user_id: string
   created_at: string
   user_profiles: {
@@ -64,6 +68,8 @@ export default function ChatPage() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [showPollDialog, setShowPollDialog] = useState(false)
+  const [isCreatingPoll, setIsCreatingPoll] = useState(false)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
@@ -144,6 +150,7 @@ export default function ChatPage() {
             image_url,
             file_url,
             file_name,
+            poll_id,
             user_id,
             created_at,
             user_profiles (
@@ -376,6 +383,32 @@ export default function ChatPage() {
     setSelectedFile(null)
     setFilePreview(null)
     if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  // Admin-only: create a poll and post it as a chat message.
+  const handleCreatePoll = async (question: string, options: string[]) => {
+    if (!user || isCreatingPoll) return
+    setIsCreatingPoll(true)
+    try {
+      const { data: pollId, error: pollError } = await supabase.rpc("create_poll", {
+        p_question: question,
+        p_options: options,
+      })
+      if (pollError || !pollId) throw pollError || new Error("no poll id")
+
+      const { error } = await supabase.from("chat_messages").insert({
+        content: question,
+        user_id: user.id,
+        poll_id: pollId,
+      })
+      if (error) throw error
+      setShowPollDialog(false)
+    } catch (err) {
+      console.error("[Chat] Create poll error:", err)
+      toast({ title: "خطأ", description: "تعذّر إنشاء الاستطلاع", variant: "destructive" })
+    } finally {
+      setIsCreatingPoll(false)
+    }
   }
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -920,10 +953,16 @@ export default function ChatPage() {
                                 <div
                                   className={cn(
                                     "rounded-lg px-3 py-2 text-sm break-words",
-                                    message.user_id === user.id ? "bg-primary text-primary-foreground" : "bg-muted",
+                                    message.poll_id
+                                      ? "bg-transparent p-0"
+                                      : message.user_id === user.id
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted",
                                   )}
                                 >
-                                  {message.audio_url ? (
+                                  {message.poll_id ? (
+                                    <PollCard pollId={message.poll_id} compact />
+                                  ) : message.audio_url ? (
                                     <div className="flex items-center gap-2">
                                       <Button
                                         type="button"
@@ -1083,6 +1122,17 @@ export default function ChatPage() {
                       >
                         <Mic className="h-4 w-4" />
                       </Button>
+                      {isAdmin && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowPollDialog(true)}
+                          disabled={isSending}
+                          title="إنشاء استطلاع"
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button type="submit" disabled={(!newMessage.trim() && !selectedFile) || isSending}>
                         {isSending ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -1097,6 +1147,14 @@ export default function ChatPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Admin: create a poll posted to the chat */}
+        <CreatePollDialog
+          open={showPollDialog}
+          onOpenChange={setShowPollDialog}
+          onSubmit={handleCreatePoll}
+          submitting={isCreatingPoll}
+        />
 
         {/* Online Users Sidebar */}
         <div className="lg:col-span-1">

@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Eye, Heart, MessageCircle, TrendingUp, ImageIcon } from "lucide-react"
+import { Eye, Heart, MessageCircle, TrendingUp, ImageIcon, BarChart3 } from "lucide-react"
 
 interface TopicCardProps {
   topic: {
@@ -21,6 +21,7 @@ interface TopicCardProps {
     featured_image_url?: string
     is_sticky?: boolean
     is_featured?: boolean
+    poll_id?: string | null
     author_name?: string
     author_avatar?: string
   }
@@ -91,15 +92,26 @@ export default function TopicCard({ topic }: TopicCardProps) {
                 </Link>
               </div>
 
-              {/* Category under the title */}
-              {topic.category && (
-                <div className="text-right">
-                  <Badge
-                    variant="secondary"
-                    className="text-xs px-3 py-1 rounded-full font-medium bg-primary/10 text-primary border-none"
-                  >
-                    {topic.category}
-                  </Badge>
+              {/* Category + poll badge under the title */}
+              {(topic.category || topic.poll_id) && (
+                <div className="flex items-center gap-2 justify-end flex-wrap">
+                  {topic.poll_id && (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs px-3 py-1 rounded-full font-medium bg-primary/10 text-primary border-none flex items-center gap-1"
+                    >
+                      <BarChart3 className="h-3 w-3" />
+                      استطلاع
+                    </Badge>
+                  )}
+                  {topic.category && (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs px-3 py-1 rounded-full font-medium bg-primary/10 text-primary border-none"
+                    >
+                      {topic.category}
+                    </Badge>
+                  )}
                 </div>
               )}
 

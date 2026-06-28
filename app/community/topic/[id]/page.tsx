@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { PollCard } from "@/components/poll-card"
 import { Eye, MessageCircle, Reply, MoreVertical, RefreshCw, Trash2, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -60,6 +61,7 @@ interface Topic {
   is_sticky?: boolean
   loom_embed_code?: string
   age_group?: string | null
+  poll_id?: string | null
   user_profile?: {
     username: string
     avatar_url: string
@@ -766,6 +768,13 @@ export default function TopicPage({ params }: { params: { id: string } }) {
           )}
 
           <SafeHtml html={topic.content} className="text-base sm:text-lg mb-4" />
+
+          {/* Attached poll */}
+          {topic.poll_id && (
+            <div className="mb-4 max-w-md">
+              <PollCard pollId={topic.poll_id} />
+            </div>
+          )}
 
           {/* Loom Video Embed */}
           {topic.loom_embed_code && renderLoomEmbed(topic.loom_embed_code)}
