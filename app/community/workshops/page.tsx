@@ -53,13 +53,16 @@ export default function WorkshopsPage() {
     const fetchWorkshops = async () => {
       try {
         setIsLoading(true)
-        const { data, error } = await supabase.from("workshops").select("*").order("date", { ascending: true })
+        // Gated API: locked workshops come back with zoom_url = null so the join
+        // link never reaches the browser for tiers that can't access them.
+        const res = await fetch("/api/workshops")
+        const data = await res.json()
 
-        if (error) {
-          console.error("Error fetching workshops:", error)
+        if (!res.ok) {
+          console.error("Error fetching workshops:", data?.error)
         } else {
-          setWorkshops(data || [])
-          setFilteredWorkshops(data || [])
+          setWorkshops(data.workshops || [])
+          setFilteredWorkshops(data.workshops || [])
         }
       } catch (error) {
         console.error("Error in workshop fetch:", error)
@@ -69,7 +72,7 @@ export default function WorkshopsPage() {
     }
 
     fetchWorkshops()
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     // Check if dark mode is enabled

@@ -41,10 +41,12 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
     const fetchWorkshop = async () => {
       try {
         setIsLoading(true)
-        const { data, error } = await supabase.from("workshops").select("*").eq("id", params.id).single()
+        // Gated API: zoom_url is null unless the user's tier can access it.
+        const res = await fetch(`/api/workshops/${params.id}`)
+        const data = await res.json()
 
-        if (error) {
-          console.error("Error fetching workshop:", error)
+        if (!res.ok) {
+          console.error("Error fetching workshop:", data?.error)
           router.push("/community/workshops")
         } else {
           setWorkshop(data)
