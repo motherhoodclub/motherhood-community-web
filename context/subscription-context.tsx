@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
+import { accessRank as computeAccessRank, canAccessTier, tierFromPlan, type Tier } from "@/lib/entitlements"
 
 type SubscriptionStatus =
   | "active"
@@ -20,6 +21,12 @@ interface SubscriptionContextType {
   subscription: any | null
   isSubscribed: boolean
   isAdmin: boolean
+  /** Feature tier of the active plan (admins are treated as premium). */
+  tier: Tier | null
+  /** Numeric access rank (0 = none, 1 = basic, 2 = plus, 3 = premium). */
+  accessRank: number
+  /** True when the user may open an item requiring `minTier` (a rank). */
+  canAccess: (minTier: number | null | undefined) => boolean
   checkSubscription: () => Promise<void>
 }
 
@@ -136,6 +143,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       subscription.current_period_end &&
       new Date(subscription.current_period_end) > new Date())
 
+  // A plan only counts toward tier/access when the subscription is actually
+  // active — otherwise a non-admin with an expired plan has no access rank.
+  const activePlanType = isSubscribed && !isAdmin ? subscription?.plan_type : null
+  const tier: Tier | null = isAdmin ? "premium" : isSubscribed ? tierFromPlan(activePlanType) : null
+  const accessRank = computeAccessRank({ planType: activePlanType, isAdmin })
+  const canAccess = (minTier: number | null | undefined) => canAccessTier(minTier, { planType: activePlanType, isAdmin })
+
   return (
     <SubscriptionContext.Provider
       value={{
@@ -143,6 +157,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         subscription,
         isSubscribed,
         isAdmin,
+        tier,
+        accessRank,
+        canAccess,
         checkSubscription,
       }}
     >

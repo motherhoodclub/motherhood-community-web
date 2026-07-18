@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Pencil, Trash2, Clock } from "lucide-react"
 import { formatWorkshopDate } from "@/lib/date-utils"
+import { MIN_TIER_OPTIONS } from "@/lib/entitlements"
+import { TierBadge } from "@/components/tier-gate"
 
 export default function AdminWorkshopsPage() {
   const [workshops, setWorkshops] = useState([])
@@ -30,6 +32,7 @@ export default function AdminWorkshopsPage() {
     time: "",
     zoom_url: "",
     image_url: "",
+    min_tier: 0,
     timezone: "GMT-5", // Default timezone
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -203,6 +206,7 @@ export default function AdminWorkshopsPage() {
       time: "",
       zoom_url: "",
       image_url: "",
+      min_tier: 0,
       timezone: "GMT-5", // Reset to default timezone
     })
     setImageFile(null)
@@ -333,6 +337,30 @@ export default function AdminWorkshopsPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="min_tier" className="block text-right font-medium">
+                      مستوى الوصول (الباقة)
+                    </Label>
+                    <select
+                      id="min_tier"
+                      name="min_tier"
+                      value={currentWorkshop.min_tier ?? 0}
+                      onChange={(e) =>
+                        setCurrentWorkshop((prev) => ({ ...prev, min_tier: Number(e.target.value) }))
+                      }
+                      className="w-full h-10 rounded-md border bg-background px-3 text-right text-sm"
+                    >
+                      {MIN_TIER_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500">
+                      حدد الباقة المطلوبة لحضور الورشة / مشاهدة تسجيلها.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="image" className="block text-right font-medium">
                       الصورة
                     </Label>
@@ -397,7 +425,12 @@ export default function AdminWorkshopsPage() {
             ) : (
               workshops.map((workshop) => (
                 <TableRow key={workshop.id}>
-                  <TableCell className="text-right font-medium">{workshop.title}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    <div className="flex items-center justify-end gap-2">
+                      <span>{workshop.title}</span>
+                      <TierBadge minTier={workshop.min_tier} />
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">{displayRawDate(workshop.date)}</TableCell>
                   <TableCell className="text-right">{workshop.time} (GMT-5)</TableCell>
                   <TableCell className="text-right">

@@ -14,6 +14,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import ProtectedRoute from "@/components/protected-route"
 import { Upload, LinkIcon } from "lucide-react"
+import { MIN_TIER_OPTIONS } from "@/lib/entitlements"
 
 export default function NewDownloadableFilePage() {
   const [title, setTitle] = useState("")
@@ -21,6 +22,7 @@ export default function NewDownloadableFilePage() {
   const [featuredImage, setFeaturedImage] = useState<File | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [driveLink, setDriveLink] = useState("")
+  const [minTier, setMinTier] = useState(0)
   const [uploadMethod, setUploadMethod] = useState<"upload" | "link">("upload")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -152,6 +154,7 @@ export default function NewDownloadableFilePage() {
           file_drive_link: uploadMethod === "link" ? driveLink : null,
           file_type: fileType,
           file_size: fileSize,
+          min_tier: minTier,
         }),
       })
 
@@ -249,6 +252,25 @@ export default function NewDownloadableFilePage() {
                     accept="image/*"
                   />
                   <p className="text-sm text-muted-foreground">اختياري - صورة تمثل الملف</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="min-tier">مستوى الوصول (الباقة)</Label>
+                  <select
+                    id="min-tier"
+                    value={minTier}
+                    onChange={(e) => setMinTier(Number(e.target.value))}
+                    className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                  >
+                    {MIN_TIER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    حدد الباقة المطلوبة للوصول إلى هذا الملف (مكتبة الملفات المميزة).
+                  </p>
                 </div>
 
                 <div className="space-y-4">

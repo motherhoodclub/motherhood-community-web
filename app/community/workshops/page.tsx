@@ -19,6 +19,9 @@ import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { formatWorkshopDate } from "@/lib/date-utils"
 import { Pagination } from "@/components/pagination"
+import { useSubscription } from "@/context/subscription-context"
+import { TierBadge } from "@/components/tier-gate"
+import { Lock } from "lucide-react"
 
 type Workshop = {
   id: string
@@ -28,6 +31,7 @@ type Workshop = {
   time: string
   zoom_url: string
   image_url: string
+  min_tier: number | null
   created_at: string
   updated_at: string
 }
@@ -42,6 +46,7 @@ export default function WorkshopsPage() {
   const [pastPage, setPastPage] = useState(1)
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const { canAccess } = useSubscription()
   const ITEMS_PER_PAGE = 6
 
   useEffect(() => {
@@ -203,7 +208,10 @@ export default function WorkshopsPage() {
                       alt={workshop.title}
                       className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                     />
-                    <Badge className="absolute top-3 right-3 bg-pink-500 hover:bg-pink-600 text-white">قادم</Badge>
+                    <div className="absolute top-3 right-3 flex gap-1">
+                      <TierBadge minTier={workshop.min_tier} />
+                      <Badge className="bg-pink-500 hover:bg-pink-600 text-white">قادم</Badge>
+                    </div>
                   </div>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl">{workshop.title}</CardTitle>
@@ -237,18 +245,33 @@ export default function WorkshopsPage() {
                         <span>التفاصيل</span>
                       </Link>
                     </Button>
-                    <Button
-                      asChild
-                      className={cn(
-                        "rounded-lg transition-all duration-200",
-                        "bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700",
-                      )}
-                    >
-                      <Link href={workshop.zoom_url} target="_blank" rel="noopener noreferrer">
-                        <span>الانضمام</span>
-                        <ExternalLink className="mr-1 h-4 w-4" />
-                      </Link>
-                    </Button>
+                    {canAccess(workshop.min_tier) ? (
+                      <Button
+                        asChild
+                        className={cn(
+                          "rounded-lg transition-all duration-200",
+                          "bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700",
+                        )}
+                      >
+                        <Link href={workshop.zoom_url} target="_blank" rel="noopener noreferrer">
+                          <span>الانضمام</span>
+                          <ExternalLink className="mr-1 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        className={cn(
+                          "rounded-lg transition-all duration-200",
+                          "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700",
+                        )}
+                      >
+                        <Link href={`/community/workshops/${workshop.id}`}>
+                          <span>ترقية للانضمام</span>
+                          <Lock className="mr-1 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
@@ -329,7 +352,10 @@ export default function WorkshopsPage() {
                         "w-full h-full object-cover transition-transform duration-300 hover:scale-105 grayscale opacity-80",
                       )}
                     />
-                    <Badge className="absolute top-3 right-3 bg-gray-500 hover:bg-gray-600 text-white">منتهي</Badge>
+                    <div className="absolute top-3 right-3 flex gap-1">
+                      <TierBadge minTier={workshop.min_tier} />
+                      <Badge className="bg-gray-500 hover:bg-gray-600 text-white">منتهي</Badge>
+                    </div>
                   </div>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl">{workshop.title}</CardTitle>

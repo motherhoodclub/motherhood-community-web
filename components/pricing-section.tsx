@@ -1,40 +1,14 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Check } from "lucide-react"
+import { Check, X } from "lucide-react"
+import { PLANS, PRICING_HEADLINE, PRICING_INTRO } from "@/lib/plans"
 
 export function PricingSection() {
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "semi-annual" | "yearly">("monthly")
-
-  const monthlyFeatures = [
-    "الوصول إلى جميع المناقشات والمواضيع",
-    "المشاركة في المنتديات والمجموعات",
-    "حضور ورش العمل والفعاليات",
-    "الوصول إلى المحتوى الحصري",
-  ]
-
-  const semiAnnualFeatures = [
-    "الوصول إلى جميع المناقشات والمواضيع",
-    "المشاركة في المنتديات والمجموعات",
-    "حضور ورش العمل والفعاليات",
-    "الوصول إلى المحتوى الحصري",
-  ]
-
-  const yearlyFeatures = [
-    "الوصول إلى جميع المناقشات والمواضيع",
-    "المشاركة في المنتديات والمجموعات",
-    "حضور ورش العمل والفعاليات",
-    "الوصول إلى المحتوى الحصري",
-    "استشارة تربوية مجانية",
-    "موارد تربوية مجانية",
-  ]
-
   return (
     <section id="pricing" className="py-20 relative overflow-hidden bg-gray-50">
       <motion.div
@@ -56,155 +30,75 @@ export function PricingSection() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <Badge className="mb-4 px-3 py-1 bg-secondary/20 text-primary rounded-full">الاشتراكات</Badge>
-          <h2 className="text-4xl font-semibold mb-4 text-primary">خطط الاشتراك</h2>
+          <h2 className="text-4xl font-semibold mb-4 text-primary">{PRICING_HEADLINE}</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            انضم إلى مجتمع الدعم التربوي واحصل على الدعم والمعرفة الذي تحتاجه في كل مرحلة من رحلة الأمومة
-          </p>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">{PRICING_INTRO}</p>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <Tabs
-            defaultValue="monthly"
-            value={selectedPlan}
-            onValueChange={(value) => setSelectedPlan(value as "monthly" | "semi-annual" | "yearly")}
-            className="w-full max-w-lg"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="monthly">شهري</TabsTrigger>
-              <TabsTrigger value="semi-annual">6 أشهر</TabsTrigger>
-              <TabsTrigger value="yearly">سنوي</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+          {PLANS.map((plan, index) => (
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+              viewport={{ once: true }}
+            >
+              <Card
+                className={`h-full flex flex-col relative ${
+                  plan.highlighted ? "border-primary border-2 shadow-lg md:-translate-y-2" : ""
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-3 right-1/2 translate-x-1/2 z-10">
+                    <Badge className="bg-primary text-primary-foreground px-3 py-1 whitespace-nowrap shadow">
+                      {plan.badge}
+                    </Badge>
+                  </div>
+                )}
+                <CardHeader className="pt-8">
+                  <CardTitle>{plan.name}</CardTitle>
+                  <CardDescription className="font-semibold text-primary/90 text-base">{plan.tagline}</CardDescription>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-1">
+                  <div className="text-3xl font-bold">
+                    {plan.price} <span className="text-muted-foreground text-sm font-normal">{plan.period}</span>
+                  </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            viewport={{ once: true }}
-          >
-            <Card className={`h-full ${selectedPlan === "monthly" ? "border-primary" : ""}`}>
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>الاشتراك الشهري</span>
-                  {selectedPlan === "monthly" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
-                </CardTitle>
-                <CardDescription>اشتراك شهري مرن</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">
-                  $33 <span className="text-muted-foreground text-sm font-normal">/ شهرياً</span>
-                </div>
+                  {plan.featuresHeading && (
+                    <p className="text-sm font-medium text-gray-700">{plan.featuresHeading}</p>
+                  )}
 
-                <ul className="space-y-2">
-                  {monthlyFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="ml-2 h-4 w-4 text-green-500 shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1"
-                  asChild
-                >
-                  <Link href="/auth/login">اشترك الآن</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
+                  <ul className="space-y-2">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        {feature.included ? (
+                          <Check className="h-4 w-4 text-green-500 shrink-0 mt-1" />
+                        ) : (
+                          <X className="h-4 w-4 text-red-400 shrink-0 mt-1" />
+                        )}
+                        <span className={feature.included ? "" : "text-muted-foreground line-through"}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <Card className={`h-full ${selectedPlan === "semi-annual" ? "border-primary" : ""}`}>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex justify-between items-center">
-                    <span>اشتراك 6 أشهر</span>
-                    {selectedPlan === "semi-annual" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
-                  </CardTitle>
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                    وفري 17%
-                  </Badge>
-                </div>
-                <CardDescription>اشتراك نصف سنوي بسعر مخفض</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">
-                  $165 <span className="text-muted-foreground text-sm font-normal">/ 6 أشهر</span>
-                </div>
-
-                <ul className="space-y-2">
-                  {semiAnnualFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="ml-2 h-4 w-4 text-green-500 shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1"
-                  asChild
-                >
-                  <Link href="/auth/login">اشترك الآن</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            viewport={{ once: true }}
-          >
-            <Card className={`h-full ${selectedPlan === "yearly" ? "border-primary" : ""}`}>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex justify-between items-center">
-                    <span>الاشتراك السنوي</span>
-                    {selectedPlan === "yearly" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
-                  </CardTitle>
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                    وفري 37%
-                  </Badge>
-                </div>
-                <CardDescription>اشتراك سنوي بسعر مخفض</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">
-                  $250 <span className="text-muted-foreground text-sm font-normal">/ سنوياً</span>
-                </div>
-
-                <ul className="space-y-2">
-                  {yearlyFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="ml-2 h-4 w-4 text-green-500 shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1"
-                  asChild
-                >
-                  <Link href="/auth/login">اشترك الآن</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
+                  {plan.note && <p className="text-xs text-muted-foreground pt-2 border-t">{plan.note}</p>}
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1"
+                    variant={plan.highlighted ? "default" : "outline"}
+                    asChild
+                  >
+                    <Link href="/auth/login">{plan.cta}</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

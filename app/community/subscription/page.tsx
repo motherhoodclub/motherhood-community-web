@@ -8,8 +8,9 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Check, Loader2, RefreshCw, AlertCircle } from "lucide-react"
+import { Check, X, Loader2, RefreshCw, AlertCircle } from "lucide-react"
 import { useSubscription } from "@/context/subscription-context"
+import { PLANS } from "@/lib/plans"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import {
@@ -344,28 +345,12 @@ export default function SubscriptionPage() {
     })
   }
 
-  const monthlyFeatures = [
-    "الوصول إلى جميع المناقشات والمواضيع",
-    "المشاركة في المنتديات والمجموعات",
-    "حضور ورش العمل والفعاليات",
-    "الوصول إلى المحتوى الحصري",
-  ]
-
-  const semiAnnualFeatures = [
-    "الوصول إلى جميع المناقشات والمواضيع",
-    "المشاركة في المنتديات والمجموعات",
-    "حضور ورش العمل والفعاليات",
-    "الوصول إلى المحتوى الحصري",
-  ]
-
-  const yearlyFeatures = [
-    "الوصول إلى جميع المناقشات والمواضيع",
-    "المشاركة في المنتديات والمجموعات",
-    "حضور ورش العمل والفعاليات",
-    "الوصول إلى المحتوى الحصري",
-    "استشارة تربوية مجانية",
-    "موارد تربوية مجانية",
-  ]
+  // Per-plan auto-renew helper copy shown under the toggle on each card.
+  const renewalNote: Record<string, { recurring: string; oneTime: string }> = {
+    monthly: { recurring: "سيتم تجديد اشتراكك تلقائياً كل شهر", oneTime: "اشتراك لمرة واحدة فقط لمدة شهر" },
+    "semi-annual": { recurring: "سيتم تجديد اشتراكك تلقائياً كل 6 أشهر", oneTime: "اشتراك لمرة واحدة فقط لمدة 6 أشهر" },
+    yearly: { recurring: "سيتم تجديد اشتراكك تلقائياً كل سنة", oneTime: "اشتراك لمرة واحدة فقط لمدة سنة" },
+  }
 
   if (isAdmin) {
     return (
@@ -549,136 +534,76 @@ export default function SubscriptionPage() {
               </Tabs>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className={selectedPlan === "monthly" ? "border-primary" : ""}>
-                <CardHeader>
-                  <CardTitle className="flex justify-between items-center">
-                    <span>الاشتراك الشهري</span>
-                    {selectedPlan === "monthly" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
-                  </CardTitle>
-                  <CardDescription>اشتراك شهري مرن</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-3xl font-bold">
-                    $33 <span className="text-muted-foreground text-sm font-normal">/ شهرياً</span>
-                  </div>
-
-                  <ul className="space-y-2">
-                    {monthlyFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="ml-2 h-4 w-4 text-green-500" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="flex items-center space-x-2 space-x-reverse pt-4">
-                    <Switch id="recurring-toggle-monthly" checked={isRecurring} onCheckedChange={setIsRecurring} />
-                    <Label htmlFor="recurring-toggle-monthly">تجديد تلقائي للاشتراك</Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {isRecurring ? "سيتم تجديد اشتراكك تلقائياً كل شهر" : "اشتراك لمرة واحدة فقط لمدة شهر"}
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={() => handleCheckout("monthly")} disabled={isCreatingCheckout} className="w-full">
-                    {isCreatingCheckout && selectedPlan === "monthly" && (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    )}
-                    اشتركي الآن
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card className={selectedPlan === "semi-annual" ? "border-primary" : ""}>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+              {PLANS.map((plan) => (
+                <Card
+                  key={plan.id}
+                  className={`flex flex-col relative ${
+                    plan.highlighted ? "border-primary border-2 shadow-lg" : ""
+                  } ${selectedPlan === plan.id ? "border-primary ring-1 ring-primary" : ""}`}
+                >
+                  {plan.badge && (
+                    <div className="absolute -top-3 right-1/2 translate-x-1/2 z-10">
+                      <Badge className="bg-primary text-primary-foreground px-3 py-1 whitespace-nowrap shadow">
+                        {plan.badge}
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className="pt-8">
                     <CardTitle className="flex justify-between items-center">
-                      <span>اشتراك 6 أشهر</span>
-                      {selectedPlan === "semi-annual" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
+                      <span>{plan.name}</span>
+                      {selectedPlan === plan.id && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
                     </CardTitle>
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                      وفري 17%
-                    </Badge>
-                  </div>
-                  <CardDescription>اشتراك نصف سنوي بسعر مخفض</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-3xl font-bold">
-                    $165 <span className="text-muted-foreground text-sm font-normal">/ 6 أشهر</span>
-                  </div>
+                    <CardDescription className="font-semibold text-primary/90 text-base">{plan.tagline}</CardDescription>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 flex-1">
+                    <div className="text-3xl font-bold">
+                      {plan.price} <span className="text-muted-foreground text-sm font-normal">{plan.period}</span>
+                    </div>
 
-                  <ul className="space-y-2">
-                    {semiAnnualFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="ml-2 h-4 w-4 text-green-500" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="flex items-center space-x-2 space-x-reverse pt-4">
-                    <Switch id="recurring-toggle-semi" checked={isRecurring} onCheckedChange={setIsRecurring} />
-                    <Label htmlFor="recurring-toggle-semi">تجديد تلقائي للاشتراك</Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {isRecurring ? "سيتم تجديد اشتراكك تلقائياً كل 6 أشهر" : "اشتراك لمرة واحدة فقط لمدة 6 أشهر"}
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={() => handleCheckout("semi-annual")} disabled={isCreatingCheckout} className="w-full">
-                    {isCreatingCheckout && selectedPlan === "semi-annual" && (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    {plan.featuresHeading && (
+                      <p className="text-sm font-medium text-gray-700">{plan.featuresHeading}</p>
                     )}
-                    اشتركي الآن
-                  </Button>
-                </CardFooter>
-              </Card>
 
-              <Card className={selectedPlan === "yearly" ? "border-primary" : ""}>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="flex justify-between items-center">
-                      <span>الاشتراك السنوي</span>
-                      {selectedPlan === "yearly" && <Badge className="bg-primary text-primary-foreground">مختار</Badge>}
-                    </CardTitle>
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                      وفري 37%
-                    </Badge>
-                  </div>
-                  <CardDescription>اشتراك سنوي بسعر مخفض</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-3xl font-bold">
-                    $250 <span className="text-muted-foreground text-sm font-normal">/ سنوياً</span>
-                  </div>
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          {feature.included ? (
+                            <Check className="h-4 w-4 text-green-500 shrink-0 mt-1" />
+                          ) : (
+                            <X className="h-4 w-4 text-red-400 shrink-0 mt-1" />
+                          )}
+                          <span className={feature.included ? "" : "text-muted-foreground line-through"}>
+                            {feature.text}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
 
-                  <ul className="space-y-2">
-                    {yearlyFeatures.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <Check className="ml-2 h-4 w-4 text-green-500" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                    {plan.note && <p className="text-xs text-muted-foreground pt-2 border-t">{plan.note}</p>}
 
-                  <div className="flex items-center space-x-2 space-x-reverse pt-4">
-                    <Switch id="recurring-toggle-yearly" checked={isRecurring} onCheckedChange={setIsRecurring} />
-                    <Label htmlFor="recurring-toggle-yearly">تجديد تلقائي للاشتراك</Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {isRecurring ? "سيتم تجديد اشتراكك تلقائياً كل سنة" : "اشتراك لمرة واحدة فقط لمدة سنة"}
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={() => handleCheckout("yearly")} disabled={isCreatingCheckout} className="w-full">
-                    {isCreatingCheckout && selectedPlan === "yearly" && (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    )}
-                    اشتركي الآن
-                  </Button>
-                </CardFooter>
-              </Card>
+                    <div className="flex items-center space-x-2 space-x-reverse pt-4">
+                      <Switch id={`recurring-toggle-${plan.id}`} checked={isRecurring} onCheckedChange={setIsRecurring} />
+                      <Label htmlFor={`recurring-toggle-${plan.id}`}>تجديد تلقائي للاشتراك</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {isRecurring ? renewalNote[plan.id].recurring : renewalNote[plan.id].oneTime}
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      onClick={() => handleCheckout(plan.id)}
+                      disabled={isCreatingCheckout}
+                      variant={plan.highlighted ? "default" : "outline"}
+                      className="w-full"
+                    >
+                      {isCreatingCheckout && selectedPlan === plan.id && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                      {plan.cta}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
           </>
         )}

@@ -14,6 +14,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
 import Link from "next/link"
+import { useSubscription } from "@/context/subscription-context"
+import { TierBadge, UpgradeCard } from "@/components/tier-gate"
 
 interface DownloadableFile {
   id: string
@@ -24,6 +26,7 @@ interface DownloadableFile {
   file_drive_link: string | null
   file_type: string | null
   file_size: number | null
+  min_tier: number | null
   download_count: number
   created_at: string
   user_profiles?: {
@@ -41,6 +44,7 @@ export default function DownloadableFileDetailsPage() {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
+  const { canAccess } = useSubscription()
 
   useEffect(() => {
     if (params.id) {
@@ -265,7 +269,10 @@ export default function DownloadableFileDetailsPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-2xl mb-2 text-right">{file.title}</CardTitle>
+                    <div className="flex items-center gap-2 mb-2">
+                      <CardTitle className="text-2xl text-right">{file.title}</CardTitle>
+                      <TierBadge minTier={file.min_tier} />
+                    </div>
                     {file.description && (
                       <CardDescription className="text-base text-right">{file.description}</CardDescription>
                     )}
@@ -340,36 +347,40 @@ export default function DownloadableFileDetailsPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Download Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center">تحميل الملف</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button onClick={handleDownload} disabled={isDownloading} className="w-full" size="lg">
-                  {isDownloading ? (
-                    "جاري التحميل..."
-                  ) : (
-                    <>
-                      <Download className="h-5 w-5 ml-2" />
-                      تحميل الملف
-                    </>
-                  )}
-                </Button>
-
-                {file.file_drive_link && (
-                  <Button variant="outline" asChild className="w-full bg-transparent">
-                    <a href={file.file_drive_link} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 ml-2" />
-                      فتح في متصفح جديد
-                    </a>
+            {canAccess(file.min_tier) ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center">تحميل الملف</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button onClick={handleDownload} disabled={isDownloading} className="w-full" size="lg">
+                    {isDownloading ? (
+                      "جاري التحميل..."
+                    ) : (
+                      <>
+                        <Download className="h-5 w-5 ml-2" />
+                        تحميل الملف
+                      </>
+                    )}
                   </Button>
-                )}
 
-                <div className="text-center text-sm text-muted-foreground">
-                  تم تحميل هذا الملف {file.download_count} مرة
-                </div>
-              </CardContent>
-            </Card>
+                  {file.file_drive_link && (
+                    <Button variant="outline" asChild className="w-full bg-transparent">
+                      <a href={file.file_drive_link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 ml-2" />
+                        فتح في متصفح جديد
+                      </a>
+                    </Button>
+                  )}
+
+                  <div className="text-center text-sm text-muted-foreground">
+                    تم تحميل هذا الملف {file.download_count} مرة
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <UpgradeCard minTier={file.min_tier} description="هذا الملف ضمن مكتبة الملفات المميزة." />
+            )}
 
             {/* File Stats */}
             <Card>

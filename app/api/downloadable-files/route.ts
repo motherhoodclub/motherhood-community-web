@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, featured_image_url, file_url, file_drive_link, file_type, file_size } = body
+    const { title, description, featured_image_url, file_url, file_drive_link, file_type, file_size, min_tier } = body
 
     const { data, error } = await supabase
       .from("downloadable_files")
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         file_drive_link,
         file_type,
         file_size,
+        min_tier: Number(min_tier) || 0,
         user_id: user.id,
       })
       .select()

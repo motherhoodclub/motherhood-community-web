@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast"
 import ProtectedRoute from "@/components/protected-route"
 import { Upload, LinkIcon, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { MIN_TIER_OPTIONS } from "@/lib/entitlements"
 
 interface DownloadableFile {
   id: string
@@ -25,6 +26,7 @@ interface DownloadableFile {
   file_drive_link: string | null
   file_type: string | null
   file_size: number | null
+  min_tier: number | null
 }
 
 export default function EditDownloadableFilePage() {
@@ -34,6 +36,7 @@ export default function EditDownloadableFilePage() {
   const [featuredImage, setFeaturedImage] = useState<File | null>(null)
   const [newFile, setNewFile] = useState<File | null>(null)
   const [driveLink, setDriveLink] = useState("")
+  const [minTier, setMinTier] = useState(0)
   const [uploadMethod, setUploadMethod] = useState<"upload" | "link">("upload")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -94,6 +97,7 @@ export default function EditDownloadableFilePage() {
       setTitle(data.title)
       setDescription(data.description || "")
       setDriveLink(data.file_drive_link || "")
+      setMinTier(data.min_tier ?? 0)
       setUploadMethod(data.file_url ? "upload" : "link")
     } catch (error) {
       console.error("Error fetching file:", error)
@@ -170,6 +174,7 @@ export default function EditDownloadableFilePage() {
           file_drive_link: uploadMethod === "link" ? driveLink : null,
           file_type: fileType,
           file_size: fileSize,
+          min_tier: minTier,
         }),
       })
 
@@ -283,6 +288,25 @@ export default function EditDownloadableFilePage() {
                     accept="image/*"
                   />
                   <p className="text-sm text-muted-foreground">اختياري - اترك فارغاً للاحتفاظ بالصورة الحالية</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="min-tier">مستوى الوصول (الباقة)</Label>
+                  <select
+                    id="min-tier"
+                    value={minTier}
+                    onChange={(e) => setMinTier(Number(e.target.value))}
+                    className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                  >
+                    {MIN_TIER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-muted-foreground">
+                    حدد الباقة المطلوبة للوصول إلى هذا الملف (مكتبة الملفات المميزة).
+                  </p>
                 </div>
 
                 <div className="space-y-4">

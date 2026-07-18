@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { formatWorkshopDate } from "@/lib/date-utils"
+import { useSubscription } from "@/context/subscription-context"
+import { TierBadge, UpgradeCard } from "@/components/tier-gate"
 
 type Workshop = {
   id: string
@@ -20,6 +22,7 @@ type Workshop = {
   time: string
   zoom_url: string
   image_url: string
+  min_tier: number | null
   created_at: string
   updated_at: string
   timezone?: string
@@ -32,6 +35,7 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
   const [localTime, setLocalTime] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const { canAccess } = useSubscription()
 
   useEffect(() => {
     const fetchWorkshop = async () => {
@@ -146,6 +150,7 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
   const isPast = isPastWorkshop(workshop.date)
   const absoluteZoomUrl = getAbsoluteUrl(workshop.zoom_url)
   const workshopTimezone = workshop.timezone || "GMT-5"
+  const locked = !canAccess(workshop.min_tier)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -167,16 +172,19 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
                 ;(e.target as HTMLImageElement).src = "/placeholder.svg?height=400&width=800"
               }}
             />
-            <Badge
-              className={cn(
-                "absolute top-4 right-4 text-sm px-3 py-1 shadow-lg",
-                isPast
-                  ? "bg-gray-500 hover:bg-gray-600"
-                  : "bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700",
-              )}
-            >
-              {isPast ? "منتهي" : "قادم"}
-            </Badge>
+            <div className="absolute top-4 right-4 flex gap-2">
+              <TierBadge minTier={workshop.min_tier} />
+              <Badge
+                className={cn(
+                  "text-sm px-3 py-1 shadow-lg",
+                  isPast
+                    ? "bg-gray-500 hover:bg-gray-600"
+                    : "bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700",
+                )}
+              >
+                {isPast ? "منتهي" : "قادم"}
+              </Badge>
+            </div>
           </div>
 
           <div>
@@ -232,7 +240,18 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
               </div>
             </div>
 
-            {!isPast && (
+            {locked ? (
+              <div className="mt-10">
+                <UpgradeCard
+                  minTier={workshop.min_tier}
+                  description={
+                    isPast
+                      ? "تسجيلات الورش السابقة متاحة ضمن الباقات الأعلى. رقّي اشتراكك لمشاهدة التسجيل."
+                      : "حضور هذه الورشة متاح ضمن الباقات الأعلى. رقّي اشتراكك للانضمام."
+                  }
+                />
+              </div>
+            ) : !isPast ? (
               <div className="mt-10">
                 <Button
                   asChild
@@ -248,9 +267,7 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
                   </a>
                 </Button>
               </div>
-            )}
-
-            {isPast && (
+            ) : (
               <div className="mt-10">
                 <Card
                   className={cn(

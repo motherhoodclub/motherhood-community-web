@@ -10,6 +10,7 @@ import { Download, FileText, Plus, Eye } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { formatArabicDate } from "@/lib/date-utils"
+import { TierBadge } from "@/components/tier-gate"
 
 interface DownloadableFile {
   id: string
@@ -20,6 +21,7 @@ interface DownloadableFile {
   file_drive_link: string | null
   file_type: string | null
   file_size: number | null
+  min_tier: number | null
   download_count: number
   created_at: string
   user_profiles: {
@@ -173,7 +175,8 @@ export default function DownloadableFilesPage() {
                       <div className="text-6xl">{getFileTypeIcon(file.file_type)}</div>
                     </div>
                   )}
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <TierBadge minTier={file.min_tier} />
                     <Badge variant="secondary" className="bg-white/90 text-gray-800">
                       {file.file_type?.split("/")[1]?.toUpperCase() || "ملف"}
                     </Badge>

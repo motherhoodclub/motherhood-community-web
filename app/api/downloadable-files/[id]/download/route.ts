@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js"
 import { type NextRequest, NextResponse } from "next/server"
+import { getRequestAccess } from "@/lib/entitlements-server"
 
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -36,6 +37,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     if (error || !file) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    }
+
+    // Enforce tier gating: block downloads of premium files for users whose
+    // subscription tier is below the file's required min_tier.
+    const access = await getRequestAccess()
+    if (access.rank < (file.min_tier ?? 0)) {
+      return NextResponse.json({ error: "Upgrade required" }, { status: 403 })
     }
 
     // Increment download count

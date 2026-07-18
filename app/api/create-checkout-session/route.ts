@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import Stripe from "stripe"
+import { getPriceId } from "@/lib/stripe-plans"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -32,26 +33,7 @@ export async function POST(request: Request) {
     console.log(`Creating checkout session for ${email}, plan: ${planType}, recurring: ${isRecurring}`)
 
     // Determine the price ID based on the plan type and whether it's recurring
-    let priceId: string
-    if (isRecurring) {
-      // Recurring subscription
-      if (planType === "yearly") {
-        priceId = process.env.STRIPE_YEARLY_PRICE_ID!
-      } else if (planType === "semi-annual") {
-        priceId = process.env.STRIPE_SEMI_ANNUAL_PRICE_ID!
-      } else {
-        priceId = process.env.STRIPE_MONTHLY_PRICE_ID!
-      }
-    } else {
-      // One-time payment
-      if (planType === "yearly") {
-        priceId = process.env.STRIPE_YEARLY_ONETIME_PRICE_ID!
-      } else if (planType === "semi-annual") {
-        priceId = process.env.STRIPE_SEMI_ANNUAL_ONETIME_PRICE_ID!
-      } else {
-        priceId = process.env.STRIPE_MONTHLY_ONETIME_PRICE_ID!
-      }
-    }
+    const priceId = getPriceId(planType, isRecurring)
 
     if (!priceId) {
       return NextResponse.json({ message: "Invalid price ID" }, { status: 400 })

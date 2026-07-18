@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import Stripe from "stripe"
+import { planFromStripeSubscription } from "@/lib/stripe-plans"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -227,8 +228,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     throw new Error("No user ID found in customer metadata")
   }
 
-  // Get the plan type from the subscription items
-  const planType = subscription.items.data[0].plan.interval === "year" ? "yearly" : "monthly"
+  // Resolve the plan type from the subscription's price (falls back to the
+  // billing interval). Matching by price ID prevents a 6-month (semi-annual)
+  // subscription from being silently recorded as "monthly".
+  const planType = planFromStripeSubscription(subscription)
 
   // Check if there's an existing subscription with this stripe_subscription_id
   const { data: existingSubscriptions } = await supabase
