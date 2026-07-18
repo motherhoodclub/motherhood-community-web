@@ -5,7 +5,16 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboard, Users, Calendar, Settings, CreditCard, MessageSquare, FolderOpen } from "lucide-react"
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Settings,
+  CreditCard,
+  MessageSquare,
+  FolderOpen,
+  GraduationCap,
+} from "lucide-react"
 
 const sidebarNavItems = [
   {
@@ -37,6 +46,11 @@ const sidebarNavItems = [
     title: "ورش العمل",
     href: "/admin/workshops",
     icon: Calendar,
+  },
+  {
+    title: "الدورات",
+    href: "/admin/courses",
+    icon: GraduationCap,
   },
   {
     title: "الإعدادات",
