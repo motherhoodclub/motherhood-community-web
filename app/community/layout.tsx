@@ -154,7 +154,8 @@ export default function CommunityLayout({
         console.log("Fetching workshops...")
         const { data, error } = await supabase
           .from("workshops")
-          .select("*")
+          // Exclude zoom_url — the sidebar only links to the (gated) detail page
+          .select("id, title, date, time, image_url, description, min_tier, created_at, updated_at")
           .gte("date", today) // Only get workshops with dates greater than or equal to today
           .order("date", { ascending: true })
           .limit(2)
