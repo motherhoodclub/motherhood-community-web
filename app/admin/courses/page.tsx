@@ -18,10 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Pencil, Trash2, ListVideo, Loader2 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Pencil, Trash2, ListVideo, Loader2, Sparkles, Save } from "lucide-react"
 import { MIN_TIER_OPTIONS } from "@/lib/entitlements"
 import { TierBadge } from "@/components/tier-gate"
 import type { Course } from "@/lib/courses"
+
+type UserOption = { id: string; username: string | null; email: string | null }
 
 type CourseRow = Course & { lesson_count: number }
 
@@ -46,6 +49,13 @@ export default function AdminCoursesPage() {
   const [isUploading, setIsUploading] = useState(false)
   const { toast } = useToast()
 
+  // Bonus course credits (per user)
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [creditUserId, setCreditUserId] = useState("")
+  const [bonusCredits, setBonusCredits] = useState(0)
+  const [enrolledCount, setEnrolledCount] = useState<number | null>(null)
+  const [isSavingCredits, setIsSavingCredits] = useState(false)
+
   const fetchCourses = async () => {
     setIsLoading(true)
     try {
@@ -62,7 +72,45 @@ export default function AdminCoursesPage() {
 
   useEffect(() => {
     fetchCourses()
+    fetch("/api/admin/users")
+      .then((r) => r.json())
+      .then((d) => setUsers(d.users ?? []))
+      .catch(() => {})
   }, [])
+
+  const selectCreditUser = async (userId: string) => {
+    setCreditUserId(userId)
+    setEnrolledCount(null)
+    if (!userId) return
+    try {
+      const res = await fetch(`/api/admin/users/course-credits?user_id=${userId}`)
+      const data = await res.json()
+      if (res.ok) {
+        setBonusCredits(data.bonus_course_credits ?? 0)
+        setEnrolledCount(data.enrolled_count ?? 0)
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const saveCredits = async () => {
+    if (!creditUserId) return
+    setIsSavingCredits(true)
+    try {
+      const res = await fetch("/api/admin/users/course-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: creditUserId, bonus_course_credits: bonusCredits }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error)
+      toast({ title: "تم بنجاح", description: "تم تحديث رصيد الدورات الإضافي" })
+    } catch (e) {
+      toast({ title: "خطأ", description: e instanceof Error ? e.message : "فشل الحفظ", variant: "destructive" })
+    } finally {
+      setIsSavingCredits(false)
+    }
+  }
 
   const openCreate = () => {
     setCurrent(emptyCourse)
@@ -213,6 +261,56 @@ export default function AdminCoursesPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Grant bonus course credits */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="h-5 w-5 text-amber-500" />
+            رصيد الدورات الإضافي
+          </CardTitle>
+          <CardDescription>
+            امنح مشتركاً رصيد دورات إضافياً فوق رصيد باقته (الباقة السنوية = دورتان). يُستخدم عند "اختيار" الدورات.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-3 md:items-end">
+            <div className="flex-1 space-y-2">
+              <Label>المشترك</Label>
+              <select
+                value={creditUserId}
+                onChange={(e) => selectCreditUser(e.target.value)}
+                className="w-full h-10 rounded-md border bg-background px-3 text-right text-sm"
+              >
+                <option value="">اختر مشتركاً...</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.username || u.email || u.id}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-full md:w-40 space-y-2">
+              <Label>رصيد إضافي</Label>
+              <Input
+                type="number"
+                min={0}
+                value={bonusCredits}
+                onChange={(e) => setBonusCredits(Number(e.target.value))}
+                className="text-right"
+                disabled={!creditUserId}
+              />
+            </div>
+            <Button onClick={saveCredits} disabled={!creditUserId || isSavingCredits}>
+              {isSavingCredits ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
+              حفظ
+            </Button>
+          </div>
+          {creditUserId && enrolledCount !== null && (
+            <p className="text-xs text-muted-foreground mt-3">عدد الدورات التي فتحها هذا المشترك: {enrolledCount}</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl" dir="rtl">

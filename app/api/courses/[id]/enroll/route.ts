@@ -33,7 +33,7 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ success: true, alreadyEnrolled: true })
     }
 
-    const creditsLeft = creditsRemaining(access.rank, enrolledIds.size, access.isAdmin)
+    const creditsLeft = creditsRemaining(access.rank, enrolledIds.size, access.isAdmin, access.bonusCredits)
     if (!canRedeemCourse(course, { rank: access.rank, isAdmin: access.isAdmin, enrolledIds, creditsLeft })) {
       return NextResponse.json({ error: "لا يمكن فتح هذه الدورة برصيدك الحالي" }, { status: 403 })
     }
@@ -52,7 +52,7 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
 
     return NextResponse.json({
       success: true,
-      creditsRemaining: creditsRemaining(access.rank, enrolledIds.size + 1, access.isAdmin),
+      creditsRemaining: creditsRemaining(access.rank, enrolledIds.size + 1, access.isAdmin, access.bonusCredits),
     })
   } catch (error) {
     console.error("Error in course enroll API:", error)

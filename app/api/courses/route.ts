@@ -30,7 +30,7 @@ export async function GET() {
       enrolledIds = new Set((enrollments ?? []).map((e) => e.course_id))
     }
 
-    const creditsLeft = creditsRemaining(access.rank, enrolledIds.size, access.isAdmin)
+    const creditsLeft = creditsRemaining(access.rank, enrolledIds.size, access.isAdmin, access.bonusCredits)
 
     const result = (courses ?? []).map((course) => ({
       ...course,

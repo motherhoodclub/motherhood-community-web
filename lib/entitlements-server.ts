@@ -15,11 +15,16 @@ export async function getRequestAccess() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { user: null, isAdmin: false, planType: null as string | null, rank: 0 }
+    return { user: null, isAdmin: false, planType: null as string | null, rank: 0, bonusCredits: 0 }
   }
 
-  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single()
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("is_admin, bonus_course_credits")
+    .eq("id", user.id)
+    .single()
   const isAdmin = profile?.is_admin === true || profile?.is_admin === "true"
+  const bonusCredits = Number(profile?.bonus_course_credits) || 0
 
   const { data: subs } = await supabase
     .from("user_subscriptions")
@@ -36,5 +41,5 @@ export async function getRequestAccess() {
   )
   const planType = active?.plan_type ?? null
 
-  return { user, isAdmin, planType, rank: accessRank({ planType, isAdmin }) }
+  return { user, isAdmin, planType, rank: accessRank({ planType, isAdmin }), bonusCredits }
 }

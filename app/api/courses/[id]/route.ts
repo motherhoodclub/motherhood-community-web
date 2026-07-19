@@ -31,10 +31,18 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     }
     const hasAccess = canAccessCourse(course, { rank: access.rank, isAdmin: access.isAdmin, enrolledIds })
 
-    const [{ data: sections }, { data: lessons }] = await Promise.all([
+    const [{ data: sections }, { data: lessons }, { data: progress }] = await Promise.all([
       supabaseAdmin.from("course_sections").select("*").eq("course_id", params.id).order("display_order"),
       supabaseAdmin.from("course_lessons").select("*").eq("course_id", params.id).order("display_order"),
+      access.user
+        ? supabaseAdmin
+            .from("course_progress")
+            .select("lesson_id")
+            .eq("user_id", access.user.id)
+            .eq("course_id", params.id)
+        : Promise.resolve({ data: [] as { lesson_id: string }[] }),
     ])
+    const completedLessonIds = (progress ?? []).map((p) => p.lesson_id)
 
     // Group lessons under their section, gating video URLs.
     const gatedLesson = (l: any) => ({
@@ -59,7 +67,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
       sections: sectionList,
       hasAccess,
       enrolled: enrolledIds.has(course.id),
-      creditsRemaining: creditsRemaining(access.rank, enrolledIds.size, access.isAdmin),
+      creditsRemaining: creditsRemaining(access.rank, enrolledIds.size, access.isAdmin, access.bonusCredits),
+      completedLessonIds,
     })
   } catch (error) {
     console.error("Error in course detail API:", error)

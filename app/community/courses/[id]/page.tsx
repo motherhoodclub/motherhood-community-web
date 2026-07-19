@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowRight, GraduationCap, Lock, PlayCircle, FileDown, Sparkles, Loader2, CheckCircle2 } from "lucide-react"
+import { ArrowRight, GraduationCap, Lock, PlayCircle, FileDown, Sparkles, Loader2, CheckCircle2, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,7 @@ export default function CourseDetailPage() {
   const { canAccess } = useSubscription()
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [activeLesson, setActiveLesson] = useState<CourseLesson | null>(null)
+  const [completed, setCompleted] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [isEnrolling, setIsEnrolling] = useState(false)
 
@@ -30,9 +31,12 @@ export default function CourseDetailPage() {
       if (!res.ok) throw new Error("not found")
       const data: CourseDetail = await res.json()
       setCourse(data)
-      // Preselect the first watchable lesson.
-      const firstPlayable = data.sections.flatMap((s) => s.lessons).find((l) => l.video_url)
-      setActiveLesson(firstPlayable ?? null)
+      const done = new Set(data.completedLessonIds ?? [])
+      setCompleted(done)
+      // Continue watching: first incomplete playable lesson (else first playable).
+      const playable = data.sections.flatMap((s) => s.lessons).filter((l) => l.video_url)
+      const next = playable.find((l) => !done.has(l.id)) ?? playable[0]
+      setActiveLesson(next ?? null)
     } catch {
       toast({ title: "خطأ", description: "لم يتم العثور على الدورة", variant: "destructive" })
       router.push("/community/courses")
@@ -45,6 +49,34 @@ export default function CourseDetailPage() {
     if (params.id) fetchCourse()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
+
+  const toggleComplete = async (lesson: CourseLesson) => {
+    const nowCompleted = !completed.has(lesson.id)
+    // Optimistic update.
+    setCompleted((prev) => {
+      const next = new Set(prev)
+      if (nowCompleted) next.add(lesson.id)
+      else next.delete(lesson.id)
+      return next
+    })
+    try {
+      const res = await fetch(`/api/courses/${params.id}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lesson_id: lesson.id, completed: nowCompleted }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      // Revert on failure.
+      setCompleted((prev) => {
+        const next = new Set(prev)
+        if (nowCompleted) next.delete(lesson.id)
+        else next.add(lesson.id)
+        return next
+      })
+      toast({ title: "خطأ", description: "تعذّر حفظ التقدم", variant: "destructive" })
+    }
+  }
 
   const handleEnroll = async () => {
     setIsEnrolling(true)
@@ -80,6 +112,10 @@ export default function CourseDetailPage() {
 
   const tierEligible = canAccess(course.min_tier)
   const creditsLeft = course.creditsRemaining // null => unlimited (admin)
+  const allLessons = course.sections.flatMap((s) => s.lessons)
+  const totalLessons = allLessons.length
+  const completedCount = allLessons.filter((l) => completed.has(l.id)).length
+  const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
   const hasCredits = creditsLeft === null || (creditsLeft ?? 0) > 0
   const canUnlockWithCredit = !course.hasAccess && course.requires_credit && tierEligible && hasCredits
 
@@ -186,6 +222,19 @@ export default function CourseDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">محتوى الدورة</CardTitle>
+              {course.hasAccess && totalLessons > 0 && (
+                <div className="pt-2 space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{progressPct}% مكتمل</span>
+                    <span>
+                      {completedCount} / {totalLessons} درس
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
+                  </div>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               {course.sections.length === 0 && (
@@ -197,28 +246,48 @@ export default function CourseDetailPage() {
                   {section.lessons.map((lesson) => {
                     const isActive = activeLesson?.id === lesson.id
                     const playable = course.hasAccess && !!lesson.video_url
+                    const isDone = completed.has(lesson.id)
                     return (
-                      <button
+                      <div
                         key={lesson.id}
-                        type="button"
-                        onClick={() => playable && setActiveLesson(lesson)}
-                        disabled={!playable}
                         className={cn(
-                          "flex w-full items-center gap-2 rounded-md px-2 py-2 text-right text-sm transition-colors",
-                          isActive ? "bg-primary/10 text-primary" : "hover:bg-muted",
-                          !playable && "cursor-not-allowed opacity-70",
+                          "flex items-center gap-1 rounded-md transition-colors",
+                          isActive ? "bg-primary/10" : "hover:bg-muted",
                         )}
                       >
-                        {lesson.locked ? (
-                          <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        ) : isActive ? (
-                          <PlayCircle className="h-4 w-4 shrink-0 text-primary" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <button
+                          type="button"
+                          onClick={() => playable && setActiveLesson(lesson)}
+                          disabled={!playable}
+                          className={cn(
+                            "flex flex-1 items-center gap-2 px-2 py-2 text-right text-sm min-w-0",
+                            isActive && "text-primary",
+                            !playable && "cursor-not-allowed opacity-70",
+                          )}
+                        >
+                          {lesson.locked ? (
+                            <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <PlayCircle className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+                          )}
+                          <span className="flex-1 line-clamp-2">{lesson.title}</span>
+                          {lesson.duration && <span className="text-xs text-muted-foreground">{lesson.duration}</span>}
+                        </button>
+                        {course.hasAccess && (
+                          <button
+                            type="button"
+                            onClick={() => toggleComplete(lesson)}
+                            title={isDone ? "إلغاء الإكمال" : "تحديد كمكتمل"}
+                            className="p-1.5 shrink-0"
+                          >
+                            {isDone ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
                         )}
-                        <span className="flex-1 line-clamp-2">{lesson.title}</span>
-                        {lesson.duration && <span className="text-xs text-muted-foreground">{lesson.duration}</span>}
-                      </button>
+                      </div>
                     )
                   })}
                 </div>

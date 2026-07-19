@@ -57,6 +57,8 @@ export interface CourseDetail extends Course {
   enrolled: boolean
   /** Course credits the user has left to spend. */
   creditsRemaining: number
+  /** Lesson ids the user has marked complete (progress tracking). */
+  completedLessonIds: string[]
 }
 
 /** Number of "choose your course" credits granted per subscription tier. */
@@ -64,15 +66,18 @@ export const COURSE_CREDITS_BY_RANK: Record<number, number> = {
   [TIER_RANK.premium]: 2, // annual members choose 2 recorded courses
 }
 
-/** Course credits granted by a user's plan (admins are effectively unlimited). */
-export function grantedCourseCredits(rank: number, isAdmin?: boolean): number {
+/**
+ * Course credits granted by a user's plan plus any admin-granted bonus
+ * (admins are effectively unlimited).
+ */
+export function grantedCourseCredits(rank: number, isAdmin?: boolean, bonus = 0): number {
   if (isAdmin) return Number.POSITIVE_INFINITY
-  return COURSE_CREDITS_BY_RANK[rank] ?? 0
+  return (COURSE_CREDITS_BY_RANK[rank] ?? 0) + Math.max(0, bonus)
 }
 
-export function creditsRemaining(rank: number, enrollmentCount: number, isAdmin?: boolean): number {
+export function creditsRemaining(rank: number, enrollmentCount: number, isAdmin?: boolean, bonus = 0): number {
   if (isAdmin) return Number.POSITIVE_INFINITY
-  return Math.max(0, grantedCourseCredits(rank) - enrollmentCount)
+  return Math.max(0, grantedCourseCredits(rank, false, bonus) - enrollmentCount)
 }
 
 /** Can the user watch this course right now? */
