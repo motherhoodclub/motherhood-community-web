@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -niE \"33|165|250|planType|selectedPlan|semi-annual|yearly|monthly|features|\\\\\\\\\\\\$\" app/community/subscription/page.tsx)"
+    ]
+  }
+}
