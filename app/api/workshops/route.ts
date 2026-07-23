@@ -24,7 +24,12 @@ export async function GET() {
 
     const result = (workshops ?? []).map((w) => {
       const hasAccess = canAccessTier(w.min_tier, { planType: access.planType, isAdmin: access.isAdmin })
-      return { ...w, zoom_url: hasAccess ? w.zoom_url : null, hasAccess }
+      return {
+        ...w,
+        zoom_url: hasAccess ? w.zoom_url : null,
+        recording_embed: hasAccess ? w.recording_embed : null,
+        hasAccess,
+      }
     })
 
     return NextResponse.json({ workshops: result })

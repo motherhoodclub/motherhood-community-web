@@ -16,10 +16,12 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Pencil, Trash2, Clock } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Pencil, Trash2, Clock, Video } from "lucide-react"
 import { formatWorkshopDate } from "@/lib/date-utils"
 import { MIN_TIER_OPTIONS } from "@/lib/entitlements"
 import { TierBadge } from "@/components/tier-gate"
+import { extractEmbedSrc } from "@/lib/embed"
 
 export default function AdminWorkshopsPage() {
   const [workshops, setWorkshops] = useState([])
@@ -35,6 +37,9 @@ export default function AdminWorkshopsPage() {
     min_tier: 0,
     timezone: "GMT-5", // Default timezone
   })
+  // Raw pasted Loom/embed snippet or share link for the "recording" tab.
+  // We never save this as-is — see extractEmbedSrc() in handleSubmit.
+  const [recordingInput, setRecordingInput] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [imageFile, setImageFile] = useState(null)
@@ -119,6 +124,7 @@ export default function AdminWorkshopsPage() {
         image_url: imageUrl,
         date: formattedDate,
         timezone: "GMT-5", // Always save with GMT-5 timezone
+        recording_embed: extractEmbedSrc(recordingInput),
       }
 
       let response
@@ -169,6 +175,7 @@ export default function AdminWorkshopsPage() {
       ...workshop,
       timezone: workshop.timezone || "GMT-5", // Default to GMT-5 if not set
     })
+    setRecordingInput(workshop.recording_embed || "")
     setIsEditing(true)
     setIsDialogOpen(true)
   }
@@ -209,6 +216,7 @@ export default function AdminWorkshopsPage() {
       min_tier: 0,
       timezone: "GMT-5", // Reset to default timezone
     })
+    setRecordingInput("")
     setImageFile(null)
     setIsEditing(false)
   }
@@ -249,6 +257,16 @@ export default function AdminWorkshopsPage() {
 
             <div className="overflow-y-auto max-h-[60vh]">
               <form onSubmit={handleSubmit} className="p-6">
+                <Tabs defaultValue="details" dir="rtl">
+                  <TabsList className="grid grid-cols-2 mb-6">
+                    <TabsTrigger value="details">التفاصيل</TabsTrigger>
+                    <TabsTrigger value="recording" className="gap-1.5">
+                      <Video className="h-4 w-4" />
+                      تسجيل اللقاء
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="details">
                 <div className="grid gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="title" className="block text-right font-medium">
@@ -376,6 +394,50 @@ export default function AdminWorkshopsPage() {
                     )}
                   </div>
                 </div>
+                  </TabsContent>
+
+                  <TabsContent value="recording">
+                    <div className="grid gap-3">
+                      <Label htmlFor="recording_embed" className="block text-right font-medium">
+                        كود تضمين Loom (أو رابط المشاركة)
+                      </Label>
+                      <Textarea
+                        id="recording_embed"
+                        name="recording_embed"
+                        value={recordingInput}
+                        onChange={(e) => setRecordingInput(e.target.value)}
+                        className="w-full text-left min-h-[120px] font-mono text-xs"
+                        placeholder='الصق كود التضمين من Loom (زر Embed)، مثال: <iframe src="https://www.loom.com/embed/..."></iframe>&#10;أو رابط المشاركة مباشرة: https://www.loom.com/share/...'
+                        dir="ltr"
+                      />
+                      <p className="text-xs text-gray-500">
+                        يظهر تسجيل اللقاء داخل صفحة الورشة بعد انتهاء موعدها، بدل رابط خارجي. اترك الحقل فارغاً إن لم
+                        يتوفر تسجيل بعد.
+                      </p>
+                      {recordingInput.trim() && (
+                        <div className="mt-2">
+                          {(() => {
+                            const previewSrc = extractEmbedSrc(recordingInput)
+                            return previewSrc ? (
+                              <div className="rounded-md overflow-hidden border border-gray-200" style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                                <iframe
+                                  src={previewSrc}
+                                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                                  allowFullScreen
+                                  frameBorder="0"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-xs text-red-500">
+                                تعذّر التعرف على رابط تضمين صالح داخل النص المُدخل (يجب أن يكون من Loom أو YouTube أو Vimeo أو Google Drive).
+                              </p>
+                            )
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </form>
             </div>
 
@@ -429,6 +491,12 @@ export default function AdminWorkshopsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <span>{workshop.title}</span>
                       <TierBadge minTier={workshop.min_tier} />
+                      {workshop.recording_embed && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 text-xs px-2 py-0.5">
+                          <Video className="h-3 w-3" />
+                          تسجيل
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">{displayRawDate(workshop.date)}</TableCell>

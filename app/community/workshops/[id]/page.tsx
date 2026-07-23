@@ -21,6 +21,7 @@ type Workshop = {
   date: string
   time: string
   zoom_url: string
+  recording_embed: string | null
   image_url: string
   min_tier: number | null
   created_at: string
@@ -268,6 +269,22 @@ export default function WorkshopDetailsPage({ params }: { params: { id: string }
                     <ExternalLink className="mr-2 h-5 w-5" />
                   </a>
                 </Button>
+              </div>
+            ) : workshop.recording_embed ? (
+              <div className="mt-10 space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">تسجيل اللقاء</h3>
+                <div
+                  className="rounded-xl overflow-hidden shadow-md"
+                  style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}
+                >
+                  <iframe
+                    src={workshop.recording_embed}
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                    allow="fullscreen"
+                    allowFullScreen
+                    frameBorder="0"
+                  />
+                </div>
               </div>
             ) : (
               <div className="mt-10">

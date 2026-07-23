@@ -23,7 +23,12 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 
     const hasAccess = canAccessTier(workshop.min_tier, { planType: access.planType, isAdmin: access.isAdmin })
 
-    return NextResponse.json({ ...workshop, zoom_url: hasAccess ? workshop.zoom_url : null, hasAccess })
+    return NextResponse.json({
+      ...workshop,
+      zoom_url: hasAccess ? workshop.zoom_url : null,
+      recording_embed: hasAccess ? workshop.recording_embed : null,
+      hasAccess,
+    })
   } catch (error) {
     console.error("Error in workshop detail API:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
