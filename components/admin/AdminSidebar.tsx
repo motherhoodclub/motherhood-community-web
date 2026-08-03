@@ -14,6 +14,8 @@ import {
   MessageSquare,
   FolderOpen,
   GraduationCap,
+  Gift,
+  Trophy,
 } from "lucide-react"
 
 const sidebarNavItems = [
@@ -51,6 +53,16 @@ const sidebarNavItems = [
     title: "الدورات",
     href: "/admin/courses",
     icon: GraduationCap,
+  },
+  {
+    title: "المكافآت",
+    href: "/admin/rewards",
+    icon: Gift,
+  },
+  {
+    title: "النقاط والشارات",
+    href: "/admin/gamification",
+    icon: Trophy,
   },
   {
     title: "الإعدادات",
