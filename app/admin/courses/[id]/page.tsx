@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { ArrowRight, Plus, Pencil, Trash2, Loader2, GripVertical, PlayCircle } from "lucide-react"
 import type { SectionWithLessons, CourseLesson } from "@/lib/courses"
+import { extractEmbedSrc } from "@/lib/embed"
 
 const emptyLesson = {
   id: null as string | null,
@@ -123,10 +124,11 @@ export default function AdminCourseContentPage() {
     }
     setIsSaving(true)
     try {
+      const payload = { ...lesson, video_url: extractEmbedSrc(lesson.video_url) }
       const res = await fetch("/api/admin/courses/lessons", {
         method: lesson.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(lesson.id ? lesson : { ...lesson, course_id: courseId }),
+        body: JSON.stringify(lesson.id ? payload : { ...payload, course_id: courseId }),
       })
       if (!res.ok) throw new Error((await res.json()).error)
       setLessonDialogOpen(false)
@@ -248,14 +250,38 @@ export default function AdminCourseContentPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>رابط الفيديو (YouTube / Vimeo)</Label>
-              <Input
+              <Label>فيديو الدرس (كود تضمين Loom أو رابط YouTube / Vimeo)</Label>
+              <Textarea
                 value={lesson.video_url}
                 onChange={(e) => setLesson((p) => ({ ...p, video_url: e.target.value }))}
-                placeholder="https://youtu.be/... أو https://vimeo.com/..."
+                placeholder='الصق كود التضمين من Loom (زر Embed)، مثال: <iframe src="https://www.loom.com/embed/..."></iframe>&#10;أو رابط مباشر: https://www.loom.com/share/... أو https://youtu.be/... أو https://vimeo.com/...'
                 dir="ltr"
-                className="text-left"
+                className="text-left min-h-[100px] font-mono text-xs"
               />
+              {lesson.video_url.trim() && (
+                <div className="mt-2">
+                  {(() => {
+                    const previewSrc = extractEmbedSrc(lesson.video_url)
+                    return previewSrc ? (
+                      <div
+                        className="rounded-md overflow-hidden border"
+                        style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}
+                      >
+                        <iframe
+                          src={previewSrc}
+                          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                          allowFullScreen
+                          frameBorder="0"
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-red-500">
+                        تعذّر التعرف على رابط تضمين صالح (يجب أن يكون من Loom أو YouTube أو Vimeo أو Google Drive).
+                      </p>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">

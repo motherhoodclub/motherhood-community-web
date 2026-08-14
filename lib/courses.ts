@@ -102,23 +102,3 @@ export function canRedeemCourse(
   if (opts.enrolledIds?.has(course.id)) return false
   return opts.creditsLeft > 0
 }
-
-/**
- * Convert a YouTube / Vimeo watch URL into an embeddable player URL.
- * Falls back to the original URL if it is already an embed or unrecognised.
- */
-export function videoEmbedUrl(url: string | null | undefined): string | null {
-  if (!url) return null
-  const trimmed = url.trim()
-
-  // YouTube: youtu.be/ID, watch?v=ID, /embed/ID, /shorts/ID
-  const yt =
-    trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/)?.[1]
-  if (yt) return `https://www.youtube-nocookie.com/embed/${yt}`
-
-  // Vimeo: vimeo.com/ID or player.vimeo.com/video/ID
-  const vimeo = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1]
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo}`
-
-  return trimmed
-}

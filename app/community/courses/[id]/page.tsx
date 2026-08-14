@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
 import { useSubscription } from "@/context/subscription-context"
 import { UpgradeCard } from "@/components/tier-gate"
-import { videoEmbedUrl, type CourseDetail, type CourseLesson } from "@/lib/courses"
+import type { CourseDetail, CourseLesson } from "@/lib/courses"
+import { extractEmbedSrc } from "@/lib/embed"
 import { cn } from "@/lib/utils"
 
 export default function CourseDetailPage() {
@@ -133,7 +134,7 @@ export default function CourseDetailPage() {
           {course.hasAccess && activeLesson?.video_url ? (
             <div className="aspect-video w-full overflow-hidden rounded-xl bg-black shadow">
               <iframe
-                src={videoEmbedUrl(activeLesson.video_url) ?? undefined}
+                src={extractEmbedSrc(activeLesson.video_url) ?? undefined}
                 title={activeLesson.title}
                 className="h-full w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
