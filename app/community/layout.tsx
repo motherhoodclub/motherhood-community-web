@@ -23,6 +23,7 @@ import {
   Instagram,
   MessageCircle,
   FileText,
+  Gift,
 } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
@@ -784,6 +785,18 @@ export default function CommunityLayout({
                     <Link href="/community/profile" className="flex items-center">
                       <User className="ml-2 h-4 w-4 text-blue-500" />
                       <span>الملف الشخصي</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    asChild
+                    className={cn(
+                      "px-2 py-1.5 rounded-lg my-1 transition-colors duration-200",
+                      isDarkMode ? "hover:bg-gray-700 focus:bg-primary/90" : "hover:bg-gray-100 focus:bg-primary/50",
+                    )}
+                  >
+                    <Link href="/community/rewards" className="flex items-center">
+                      <Gift className="ml-2 h-4 w-4 text-pink-500" />
+                      <span>المكافآت</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem

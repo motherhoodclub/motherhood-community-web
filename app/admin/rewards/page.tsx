@@ -11,7 +11,13 @@ export default async function RewardsPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const [{ data: rewards }, { data: redemptions }, { data: profiles }] = await Promise.all([
+  const [
+    { data: rewards },
+    { data: redemptions },
+    { data: profiles },
+    { data: courses },
+    { data: workshops },
+  ] = await Promise.all([
     serviceClient.from("rewards").select("*").order("created_at", { ascending: false }),
     serviceClient
       .from("reward_redemptions")
@@ -19,6 +25,8 @@ export default async function RewardsPage() {
       .order("created_at", { ascending: false })
       .limit(500),
     serviceClient.from("user_profiles").select("id, username, avatar_url"),
+    serviceClient.from("courses").select("id, title").order("title", { ascending: true }),
+    serviceClient.from("workshops").select("id, title, date").order("date", { ascending: false }),
   ])
 
   const profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {}
@@ -35,6 +43,8 @@ export default async function RewardsPage() {
     <RewardsManagement
       initialRewards={rewards || []}
       initialRedemptions={redemptionsWithUser}
+      courses={courses || []}
+      workshops={workshops || []}
     />
   )
 }

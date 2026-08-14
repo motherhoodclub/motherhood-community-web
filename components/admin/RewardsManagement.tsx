@@ -16,6 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Gift, Plus, Pencil, Trash2, Check, X, Copy, RefreshCw } from "lucide-react"
 
+type RewardMetadata = {
+  instructions?: string // how to redeem / use
+  link?: string // external URL (booking, resource…)
+  course_id?: string
+  workshop_id?: string
+}
+
 type Reward = {
   id: string
   title: string
@@ -26,8 +33,11 @@ type Reward = {
   stock: number | null
   valid_days: number | null
   active: boolean
+  metadata: RewardMetadata | null
   created_at: string
 }
+
+type RefItem = { id: string; title: string; date?: string }
 
 type Redemption = {
   id: string
@@ -47,6 +57,8 @@ const TYPE_LABELS: Record<string, string> = {
   present: "هدية",
   offer_code: "كود اشتراك",
   content: "محتوى حصري",
+  course: "دورة",
+  workshop: "ورشة عمل",
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -73,14 +85,22 @@ const emptyForm = {
   stock: "" as string | number,
   valid_days: "" as string | number,
   active: true,
+  instructions: "",
+  link: "",
+  course_id: "",
+  workshop_id: "",
 }
 
 export function RewardsManagement({
   initialRewards,
   initialRedemptions,
+  courses,
+  workshops,
 }: {
   initialRewards: Reward[]
   initialRedemptions: Redemption[]
+  courses: RefItem[]
+  workshops: RefItem[]
 }) {
   const supabase = createClientComponentClient()
   const { toast } = useToast()
@@ -98,6 +118,7 @@ export function RewardsManagement({
   }
 
   const openEdit = (r: Reward) => {
+    const m = r.metadata || {}
     setForm({
       id: r.id,
       title: r.title,
@@ -108,6 +129,10 @@ export function RewardsManagement({
       stock: r.stock ?? "",
       valid_days: r.valid_days ?? "",
       active: r.active,
+      instructions: m.instructions || "",
+      link: m.link || "",
+      course_id: m.course_id || "",
+      workshop_id: m.workshop_id || "",
     })
     setDialogOpen(true)
   }
@@ -118,6 +143,13 @@ export function RewardsManagement({
       return
     }
     setSaving(true)
+    // Type-specific custom fields live in metadata (jsonb) — no schema change.
+    const metadata: Record<string, string> = {}
+    if (form.instructions.trim()) metadata.instructions = form.instructions.trim()
+    if (form.link.trim()) metadata.link = form.link.trim()
+    if (form.type === "course" && form.course_id) metadata.course_id = form.course_id
+    if (form.type === "workshop" && form.workshop_id) metadata.workshop_id = form.workshop_id
+
     const payload = {
       title: form.title.trim(),
       description: form.description.trim() || null,
@@ -127,6 +159,7 @@ export function RewardsManagement({
       stock: form.stock === "" ? null : Number(form.stock),
       valid_days: form.valid_days === "" ? null : Number(form.valid_days),
       active: form.active,
+      metadata,
     }
     try {
       if (form.id) {
@@ -388,6 +421,8 @@ export function RewardsManagement({
                     <SelectItem value="present">هدية</SelectItem>
                     <SelectItem value="offer_code">كود اشتراك</SelectItem>
                     <SelectItem value="content">محتوى حصري</SelectItem>
+                    <SelectItem value="course">دورة</SelectItem>
+                    <SelectItem value="workshop">ورشة عمل</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -410,6 +445,58 @@ export function RewardsManagement({
                 <Input type="number" value={form.valid_days} onChange={(e) => setForm({ ...form, valid_days: e.target.value })} />
               </div>
             </div>
+            {/* Link an existing course */}
+            {form.type === "course" && (
+              <div className="space-y-2">
+                <Label>الدورة المرتبطة</Label>
+                <Select value={form.course_id} onValueChange={(v) => setForm({ ...form, course_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="اختاري دورة" /></SelectTrigger>
+                  <SelectContent>
+                    {courses.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Link an existing workshop */}
+            {form.type === "workshop" && (
+              <div className="space-y-2">
+                <Label>الورشة المرتبطة</Label>
+                <Select value={form.workshop_id} onValueChange={(v) => setForm({ ...form, workshop_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="اختاري ورشة" /></SelectTrigger>
+                  <SelectContent>
+                    {workshops.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.title}{w.date ? ` — ${new Date(w.date).toLocaleDateString("ar-SA-u-ca-gregory")}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Custom fields available to every reward type */}
+            <div className="space-y-2">
+              <Label>كيفية الاستخدام / تعليمات للعضو</Label>
+              <Textarea
+                value={form.instructions}
+                onChange={(e) => setForm({ ...form, instructions: e.target.value })}
+                rows={3}
+                placeholder="مثال: استخدمي الكود عند حجز الاستشارة عبر الموقع، أو تواصلي مع الدعم لتفعيل الوصول."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>رابط (اختياري)</Label>
+              <Input
+                value={form.link}
+                onChange={(e) => setForm({ ...form, link: e.target.value })}
+                placeholder="https://…  (رابط الحجز / الدورة / المورد)"
+                dir="ltr"
+              />
+            </div>
+
             <div className="flex items-center gap-2">
               <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               <Label>مفعّل</Label>
