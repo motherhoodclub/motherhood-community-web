@@ -13,7 +13,8 @@ import { Icons } from "@/components/ui/icons"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { ChevronDown, ChevronUp, Mail } from "lucide-react"
+import { ChevronDown, ChevronUp, Mail, MessageCircle } from "lucide-react"
+import { WhatsAppLogin } from "@/components/auth/whatsapp-login"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [showEmailForm, setShowEmailForm] = useState(false)
+  const [showWhatsAppForm, setShowWhatsAppForm] = useState(false)
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
@@ -32,6 +34,7 @@ export default function LoginPage() {
     if (saved) {
       setLastUsedMethod(saved)
       if (saved === "email") setShowEmailForm(true)
+      if (saved === "whatsapp") setShowWhatsAppForm(true)
     }
   }, [])
 
@@ -165,6 +168,32 @@ export default function LoginPage() {
             <span className="bg-background px-2 text-muted-foreground">أو</span>
           </div>
         </div>
+
+        {/* Expandable WhatsApp Section */}
+        <div className="relative">
+          {lastUsedMethod === "whatsapp" && (
+            <span className="absolute -top-3 right-3 z-10 bg-primary text-primary-foreground text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm">
+              استخدمته مؤخراً
+            </span>
+          )}
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full h-12 text-base border-[#25D366] text-[#128C7E] hover:bg-[#25D366]/10 hover:text-[#128C7E]"
+            onClick={() => setShowWhatsAppForm(!showWhatsAppForm)}
+            disabled={isLoading}
+          >
+            <MessageCircle className="ml-2 h-5 w-5" />
+            تسجيل الدخول عبر واتساب
+            {showWhatsAppForm ? (
+              <ChevronUp className="mr-2 h-4 w-4" />
+            ) : (
+              <ChevronDown className="mr-2 h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {showWhatsAppForm && <WhatsAppLogin />}
 
         {/* Expandable Email Section */}
         <div className="relative">
